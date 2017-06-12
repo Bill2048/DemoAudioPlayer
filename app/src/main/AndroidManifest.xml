@@ -23,7 +23,7 @@
         </activity>
 
         <!-- Services -->
-        <service android:name=".MediaPlayerServices" />
+        <service android:name=".MediaPlayerService" />
     </application>
 
 </manifest>
