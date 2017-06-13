@@ -23,21 +23,30 @@
 
             <ViewSwitcher
                 android:id="@+id/vs_left"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="8dp">
 
                 <TextView
                     android:id="@+id/tv_number"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="right|center_vertical"
                     android:ellipsize="end"
                     android:maxLength="3"
+                    android:textColor="@android:color/black"
+                    android:textSize="13sp"
                     tools:text="999" />
 
                 <ImageView
                     android:id="@+id/iv_status"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:scaleType="centerCrop"
+                    android:src="@mipmap/ic_volume_up_black_18dp" />
+
             </ViewSwitcher>
 
             <LinearLayout
@@ -49,12 +58,18 @@
                     android:id="@+id/tv_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@android:color/black"
+                    android:textSize="13sp"
                     tools:text="歌曲名称" />
 
                 <TextView
                     android:id="@+id/tv_artist"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
                     tools:text="演奏者" />
             </LinearLayout>
         </LinearLayout>

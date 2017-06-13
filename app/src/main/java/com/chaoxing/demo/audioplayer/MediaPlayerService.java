@@ -30,7 +30,7 @@ public class MediaPlayerService extends Service {
     private int resumePosition;
 
     private List<Audio> audioList = new ArrayList<>();
-    private int audioIndex = -1;
+    private int activeIndex = 0;
     private Audio activeAudio;  // 当前播放音频
 
     private AudioManager audioManager;

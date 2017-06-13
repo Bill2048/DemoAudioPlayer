@@ -38,7 +38,7 @@ public class AudioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
         final AudioViewHolder audioViewHolder = (AudioViewHolder) holder;
         Audio audio = (Audio) getItem(position);
-        audioViewHolder.tvNumber.setText(position + "");
+        audioViewHolder.tvNumber.setText((position + 1) + "");
         audioViewHolder.tvTitle.setText(audio.getTitle());
         audioViewHolder.tvArtist.setText(audio.getArtist());
         audioViewHolder.itemView.setOnClickListener(new View.OnClickListener() {
