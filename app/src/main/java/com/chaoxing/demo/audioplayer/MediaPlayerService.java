@@ -1,8 +1,10 @@
 package com.chaoxing.demo.audioplayer;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -25,7 +27,6 @@ public class MediaPlayerService extends Service {
     private final IBinder iBinder = new LocalBinder();
 
     private MediaPlayer mediaPlayer;
-    private String mediaPath;
     private int resumePosition;
 
     private List<Audio> audioList = new ArrayList<>();
@@ -50,13 +51,14 @@ public class MediaPlayerService extends Service {
         super.onCreate();
 
         callStateListener();
+        registerPlayNewAudio();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
             //An audio file is passed to the service through putExtra();
-            mediaPath = intent.getExtras().getString("media");
+            activeAudio = intent.getParcelableExtra("audio");
         } catch (NullPointerException e) {
             stopSelf();
         }
@@ -80,6 +82,11 @@ public class MediaPlayerService extends Service {
             mediaPlayer.release();
         }
         removeAudioFocus();
+        if (phoneStateListener != null) {
+            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
+        }
+
+        unregisterReceiver(playNewAudio);
     }
 
 
@@ -98,13 +105,14 @@ public class MediaPlayerService extends Service {
 
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-        try {
-
-            mediaPlayer.setDataSource(mediaPath);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (activeAudio != null) {
+            try {
+                mediaPlayer.setDataSource(activeAudio.getData());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mediaPlayer.prepareAsync();
         }
-        mediaPlayer.prepareAsync();
     }
 
     private void playMedia() {
@@ -282,5 +290,25 @@ public class MediaPlayerService extends Service {
         public MediaPlayerService getService() {
             return MediaPlayerService.this;
         }
+    }
+
+    private BroadcastReceiver playNewAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            activeAudio = intent.getParcelableExtra("audio");
+            if (activeAudio != null) {
+                stopMedia();
+                initMediaPlayer();
+            } else {
+                stopSelf();
+            }
+        }
+    };
+
+    public static final String Broadcast_PLAY_NEW_AUDIO = "com.chaoxing.mobile.audioplayer.PlayNewAudio";
+
+    private void registerPlayNewAudio() {
+        IntentFilter filter = new IntentFilter(Broadcast_PLAY_NEW_AUDIO);
+        registerReceiver(playNewAudio, filter);
     }
 }
