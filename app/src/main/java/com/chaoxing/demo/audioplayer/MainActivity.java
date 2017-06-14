@@ -1,40 +1,105 @@
 package com.chaoxing.demo.audioplayer;
 
-import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatSeekBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.Toast;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private MediaPlayerService player;
+    private AudioPlayerService player;
     private boolean serviceBound;
 
     private RecyclerView rvAudio;
-    private List<Audio> audioList = new ArrayList<>();
+    private ArrayList<Audio> audioList = new ArrayList<>();
+
+    private TextView mTvProgress;
+    private TextView mTvLength;
+    private AppCompatSeekBar mSbProgress;
+    private boolean mDraggingSeekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initView();
+        CourseAudioPlayer.getInstance().addOnPlayListener(this, mOnPlayListener);
         loadAudio();
         initRecyclerView();
     }
 
+    private void initView() {
+        mTvProgress = (TextView) findViewById(R.id.tv_progress);
+        mTvLength = (TextView) findViewById(R.id.tv_length);
+        mSbProgress = (AppCompatSeekBar) findViewById(R.id.sb_progress);
+        mSbProgress.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
+        updateProgress(0, 0);
+    }
+
+    private SeekBar.OnSeekBarChangeListener mOnSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (fromUser) {
+                mDraggingSeekBar = true;
+                updateProgress(progress, mSbProgress.getMax());
+            }
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            CourseAudioPlayer.getInstance().setPlayProgress(MainActivity.this, seekBar.getProgress());
+            mDraggingSeekBar = false;
+        }
+    };
+
+    private void updateProgress(int progress, int length) {
+        if (length < 0) {
+            length = 0;
+        }
+        if (progress > length) {
+            progress = length;
+        }
+        if (length == 0) {
+            mSbProgress.setEnabled(false);
+        } else {
+            mSbProgress.setEnabled(true);
+        }
+        mSbProgress.setMax(length);
+        mSbProgress.setProgress(progress);
+        String fLength = AudioPlayerUtils.formatTime(length);
+        String fProgress = AudioPlayerUtils.formatTime(progress);
+        int count = 0;
+        do {
+            String str = fLength.replaceFirst("00:", "");
+            if (!str.equals(fLength)) {
+                count++;
+                fLength = str;
+            } else {
+                break;
+            }
+        } while (true);
+        while (count > 0) {
+            fProgress = fProgress.replaceFirst("00:", "");
+            count--;
+        }
+        mTvLength.setText(fLength);
+        mTvProgress.setText(fProgress);
+    }
 
     private void loadAudio() {
         ContentResolver contentResolver = getContentResolver();
@@ -64,9 +129,7 @@ public class MainActivity extends AppCompatActivity {
         rvAudio.addOnItemTouchListener(new OnRecyclerViewItemTouchListener(rvAudio, new OnRecyclerViewItemClickListener() {
             @Override
             public void onItemClick(RecyclerView rv, View childView, int position) {
-                AudioAdapter adapter = (AudioAdapter) rv.getAdapter();
-                Audio audio = (Audio) adapter.getItem(position);
-                playAudio(audio);
+                CourseAudioPlayer.getInstance().playList(MainActivity.this, audioList, position, 0);
             }
 
             @Override
@@ -76,54 +139,14 @@ public class MainActivity extends AppCompatActivity {
         }));
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean("ServiceState", serviceBound);
-        super.onSaveInstanceState(outState);
-    }
 
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        serviceBound = savedInstanceState.getBoolean("ServiceState");
-    }
-
-    private void playAudio(Audio audio) {
-        if (!serviceBound) {
-            Intent playerIntent = new Intent(this, MediaPlayerService.class);
-            playerIntent.putExtra("audio", audio);
-            startService(playerIntent);
-            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-        } else {
-            Intent broadcastIntent = new Intent(MediaPlayerService.Broadcast_PLAY_NEW_AUDIO);
-            broadcastIntent.putExtra("audio", audio);
-            sendBroadcast(broadcastIntent);
-        }
-    }
-
-    private ServiceConnection serviceConnection = new ServiceConnection() {
+    private CourseAudioPlayer.OnPlayListener mOnPlayListener = new CourseAudioPlayer.OnPlayListener() {
         @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            MediaPlayerService.LocalBinder binder = (MediaPlayerService.LocalBinder) service;
-            player = binder.getService();
-            serviceBound = true;
-
-            Toast.makeText(MainActivity.this, "Service Bound", Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            serviceBound = false;
+        public void onProgressChanged(int currentPosition, int length) {
+            if (!mDraggingSeekBar) {
+                updateProgress(currentPosition, length);
+            }
         }
     };
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (serviceBound) {
-            unbindService(serviceConnection);
-            //service is active
-            player.stopSelf();
-        }
-    }
 }

@@ -14,4 +14,6 @@
 -->
 
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="?attr/colorControlHighlight" />
+    android:color="?attr/colorControlHighlight">
+
+</ripple>
