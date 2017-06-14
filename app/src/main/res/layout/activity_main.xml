@@ -70,7 +70,7 @@
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1">
 
-                    <ImageButton
+                    <android.support.v7.widget.AppCompatImageButton
                         style="@style/TransparentCircleImageButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -84,7 +84,8 @@
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1">
 
-                    <ImageButton
+                    <android.support.v7.widget.AppCompatImageButton
+                        android:id="@+id/ib_previous"
                         style="@style/TransparentCircleImageButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -99,6 +100,7 @@
                     android:layout_weight="1">
 
                     <android.support.v7.widget.AppCompatImageButton
+                        android:id="@+id/ib_play"
                         style="@style/TransparentCircleImageButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -112,7 +114,8 @@
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1">
 
-                    <ImageButton
+                    <android.support.v7.widget.AppCompatImageButton
+                        android:id="@+id/ib_next"
                         style="@style/TransparentCircleImageButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -126,7 +129,7 @@
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1">
 
-                    <ImageButton
+                    <android.support.v7.widget.AppCompatImageButton
                         style="@style/TransparentCircleImageButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

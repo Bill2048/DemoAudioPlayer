@@ -27,7 +27,7 @@ public class AudioPlayerService extends Service {
 
     private Handler mHandler = new Handler();
 
-    private final IBinder mIBinder = new LocalBinder();
+    private final IBinder mAudioPlayerBinder = new AudioPlayerBinder();
 
     private MediaPlayer mMediaPlayer;
 
@@ -39,19 +39,22 @@ public class AudioPlayerService extends Service {
     private PhoneStateListener mPhoneStateListener;
     private TelephonyManager mTelephonyManager;
 
-    private List<Audio> mAudioList = new ArrayList<>();
+    private List<Audio> mAudioList = new ArrayList<>();  // 当前播放列表
     private int mActiveIndex = -1;  // 当前音频在列表中的下标
     private Audio mActiveAudio;  // 当前播放音频
     private int mActivePosition;  // 当前音频暂停播放位置
 
-    private OnProgressChangedListener onProgressChangedListener;
+    private OnPositionChangedListener onPositionChangedListener;  // 播放进度
+
+    private boolean mPause;  // 当前是否暂停
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         callStateListener();
-        registerPlayNewAudio();
+        requestAudioFocus();
+        registerPlayReceiver();
     }
 
 //    @Override
@@ -80,19 +83,26 @@ public class AudioPlayerService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return mIBinder;
+        return mAudioPlayerBinder;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        stopMedia();
+        mAudioList.clear();
+
         if (mMediaPlayer != null) {
-            stopMedia();
             mMediaPlayer.release();
         }
-        removeAudioFocus();
+
         if (mPhoneStateListener != null) {
             mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+        }
+
+        if (mAudioManager != null) {
+            mAudioManager.abandonAudioFocus(onAudioFocusChangeListener);
         }
 
         unregisterReceiver(mPlayReceiver);
@@ -102,37 +112,30 @@ public class AudioPlayerService extends Service {
         stopMedia();
         mAudioList.clear();
         mAudioList.addAll(audioList);
-        if (!mAudioList.isEmpty()) {
-            mActiveIndex = index;
-            if (mActiveIndex < 0 || mActiveIndex >= mAudioList.size()) {
-                mActiveIndex = 0;
-            }
-            mActivePosition = position;
-            mActiveAudio = mAudioList.get(mActiveIndex);
-        } else {
-            mActiveIndex = -1;
-            mActivePosition = 0;
-            mActiveAudio = null;
-        }
-        initMediaPlayer();
-    }
-
-    private void playNext() {
-        int index = mActiveIndex + 1;
-        play(index, 0);
+        play(index, position);
     }
 
     private void play(int index, int position) {
-        if (index >= mAudioList.size()) {
-            mActiveIndex = -1;
-            mActiveAudio = null;
-            mActivePosition = 0;
+        if (index < 0 || index >= mAudioList.size()) {
+            stopMedia();
         } else {
             mActiveIndex = index;
             mActiveAudio = mAudioList.get(mActiveIndex);
             mActivePosition = position;
             initMediaPlayer();
         }
+    }
+
+    private void playPrevious() {
+        int index = mActiveIndex - 1;
+        stopMedia();
+        play(index, 0);
+    }
+
+    private void playNext() {
+        int index = mActiveIndex + 1;
+        stopMedia();
+        play(index, 0);
     }
 
     private void initMediaPlayer() {
@@ -167,56 +170,61 @@ public class AudioPlayerService extends Service {
     }
 
     private void stopMedia() {
-        if (mMediaPlayer == null) {
-            return;
-        }
-
-        mMediaPlayer.stop();
+        mHandler.removeCallbacks(mUpdatePositionRunnable);
+        mActiveIndex = -1;
+        mActiveAudio = null;
         mActivePosition = 0;
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+        }
     }
 
     private void pauseMedia() {
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
             mActivePosition = mMediaPlayer.getCurrentPosition();
+            mPause = true;
         }
     }
 
     private void resumeMedia() {
-        if (!mMediaPlayer.isPlaying()) {
-            mMediaPlayer.seekTo(mActivePosition);
-            mMediaPlayer.start();
+        if (mPause) {
+            if (!mMediaPlayer.isPlaying()) {
+                mMediaPlayer.seekTo(mActivePosition);
+                mMediaPlayer.start();
+            }
         }
+        mPause = false;
     }
 
-    private int setProgress(int currentProgress) {
+    private int updatePosition(int position) {
         if (mMediaPlayer == null)
             return -1;
 
-        currentProgress = currentProgress > 0 ? currentProgress : mMediaPlayer.getCurrentPosition();
+        position = position > 0 ? position : mMediaPlayer.getCurrentPosition();
         int length = mMediaPlayer.getDuration();
 
-        if (onProgressChangedListener != null) {
-            onProgressChangedListener.onProgressChanged(currentProgress, length);
+        if (onPositionChangedListener != null) {
+            onPositionChangedListener.onPositionChanged(position, length);
         }
-
-        mHandler.postDelayed(mUpdateProgressRunnable, 1000);
-        return currentProgress;
+        mHandler.removeCallbacks(mUpdatePositionRunnable);
+        mHandler.postDelayed(mUpdatePositionRunnable, 1000);
+        return position;
     }
 
-    private Runnable mUpdateProgressRunnable = new Runnable() {
+    private Runnable mUpdatePositionRunnable = new Runnable() {
         @Override
         public void run() {
-            setProgress(0);
+            updatePosition(0);
         }
     };
 
-    public interface OnProgressChangedListener {
-        void onProgressChanged(int currentPosition, int length);
+    public interface OnPositionChangedListener {
+        void onPositionChanged(int currentPosition, int length);
     }
 
-    public void setOnProgressChangedListener(OnProgressChangedListener onProgressChangedListener) {
-        this.onProgressChangedListener = onProgressChangedListener;
+    public void setOnPositionChangedListener(OnPositionChangedListener onPositionChangedListener) {
+        this.onPositionChangedListener = onPositionChangedListener;
     }
 
     private MediaPlayer.OnErrorListener onErrorListener = new MediaPlayer.OnErrorListener() {
@@ -249,8 +257,15 @@ public class AudioPlayerService extends Service {
     private MediaPlayer.OnPreparedListener onPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
+            int length = mp.getDuration();
+            if (mActivePosition > length) {
+                mActivePosition = 0;
+            }
+            if (mActivePosition > 0) {
+                mMediaPlayer.seekTo(mActivePosition);
+            }
             playMedia();
-            setProgress(0);
+            updatePosition(0);
         }
     };
 
@@ -279,10 +294,6 @@ public class AudioPlayerService extends Service {
         }
         //Could not gain focus
         return false;
-    }
-
-    private boolean removeAudioFocus() {
-        return AudioManager.AUDIOFOCUS_REQUEST_GRANTED == mAudioManager.abandonAudioFocus(onAudioFocusChangeListener);
     }
 
     private AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
@@ -338,7 +349,6 @@ public class AudioPlayerService extends Service {
                         }
                         break;
                     case TelephonyManager.CALL_STATE_IDLE:
-                        // Phone idle. Start playing.
                         if (mMediaPlayer != null) {
                             if (mOngoingCall) {
                                 mOngoingCall = false;
@@ -361,8 +371,7 @@ public class AudioPlayerService extends Service {
         }
     };
 
-    public class LocalBinder extends Binder {
-
+    public class AudioPlayerBinder extends Binder {
         public AudioPlayerService getService() {
             return AudioPlayerService.this;
         }
@@ -382,7 +391,7 @@ public class AudioPlayerService extends Service {
 
     public static final String BROADCAST_PLAY_NEW_AUDIO = "com.chaoxing.mobile.audioplayer.PlayNewAudio";
 
-    private void registerPlayNewAudio() {
+    private void registerPlayReceiver() {
         IntentFilter filter = new IntentFilter(BROADCAST_PLAY_NEW_AUDIO);
         registerReceiver(mPlayReceiver, filter);
     }
@@ -397,6 +406,42 @@ public class AudioPlayerService extends Service {
         }
     };
 
+    public void pausePlay() {
+        if (mMediaPlayer == null) {
+            return;
+        }
+        pauseMedia();
+    }
+
+    public void resumePlay() {
+        if (mMediaPlayer == null) {
+            return;
+        }
+        resumeMedia();
+    }
+
+    public void previous() {
+        if (mMediaPlayer == null) {
+            return;
+        }
+        if (mMediaPlayer.isPlaying() || mPause) {
+            playPrevious();
+        }
+    }
+
+    public void next() {
+        if (mMediaPlayer == null) {
+            return;
+        }
+        if (mMediaPlayer.isPlaying() || mPause) {
+            playNext();
+        }
+    }
+
+    public boolean isPause() {
+        return mPause;
+    }
+
     public void updatePlayPosition(int position) {
         if (mMediaPlayer == null) {
             return;
@@ -406,5 +451,6 @@ public class AudioPlayerService extends Service {
             position = length;
         }
         mMediaPlayer.seekTo(position);
+        mActivePosition = position;
     }
 }

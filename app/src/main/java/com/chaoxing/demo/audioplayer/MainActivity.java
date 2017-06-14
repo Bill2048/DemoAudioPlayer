@@ -10,30 +10,33 @@ import android.support.v7.widget.AppCompatSeekBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private AudioPlayerService player;
-    private boolean serviceBound;
-
-    private RecyclerView rvAudio;
-    private ArrayList<Audio> audioList = new ArrayList<>();
+    private RecyclerView mRvAudio;
+    private ArrayList<Audio> mAudioList = new ArrayList<>();
 
     private TextView mTvProgress;
     private TextView mTvLength;
     private AppCompatSeekBar mSbProgress;
     private boolean mDraggingSeekBar;
 
+    private ImageButton mIbPrevious;
+    private ImageButton mIbPlay;
+    private ImageButton mIbNext;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initView();
-        CourseAudioPlayer.getInstance().addOnPlayListener(this, mOnPlayListener);
+        AudioPlayerController.getInstance().addOnPlayListener(this, mOnPlayListener);
         loadAudio();
         initRecyclerView();
     }
@@ -44,6 +47,82 @@ public class MainActivity extends AppCompatActivity {
         mSbProgress = (AppCompatSeekBar) findViewById(R.id.sb_progress);
         mSbProgress.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
         updateProgress(0, 0);
+
+        mIbPrevious = (ImageButton) findViewById(R.id.ib_previous);
+        mIbPrevious.setOnClickListener(mOnClickListener);
+        mIbPlay = (ImageButton) findViewById(R.id.ib_play);
+        mIbPlay.setOnClickListener(mOnClickListener);
+        mIbNext = (ImageButton) findViewById(R.id.ib_next);
+        mIbNext.setOnClickListener(mOnClickListener);
+    }
+
+    private View.OnClickListener mOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int id = v.getId();
+            if (id == R.id.ib_previous) {
+                previous();
+            } else if (id == R.id.ib_play) {
+                switchPlay();
+            } else if (id == R.id.ib_next) {
+                next();
+            }
+        }
+    };
+
+    private boolean mPlayed;
+    private boolean mPause = true;
+    private int mActiveIndex;
+
+    private void switchPlay() {
+        if (mPause) {
+            play();
+        } else {
+            pause();
+        }
+    }
+
+    private void play() {
+        if (mPause) {
+            if (!mPlayed) {
+                if (!mAudioList.isEmpty()) {
+                    mPause = false;
+                    play(0);
+                }
+            } else {
+                if (AudioPlayerController.getInstance().isPause(this)) {
+                    AudioPlayerController.getInstance().resumePlay(this);
+                    mIbPlay.setImageResource(R.mipmap.ic_pause_circle_outline_black_48dp);
+                    mPause = false;
+                } else {
+                    play(mActiveIndex);
+                    mPause = false;
+                }
+            }
+        }
+    }
+
+    private void play(int index) {
+        mPlayed = true;
+        AudioPlayerController.getInstance().play(this, mAudioList, index, 0);
+        mActiveIndex = index;
+        mIbPlay.setImageResource(R.mipmap.ic_pause_circle_outline_black_48dp);
+    }
+
+    private void previous() {
+        if (mPlayed) {
+            AudioPlayerController.getInstance().previous(this);
+        }
+    }
+
+    private void next() {
+        AudioPlayerController.getInstance().next(this);
+    }
+
+    private void pause() {
+        AudioPlayerController.getInstance().parsePlay(this);
+        mIbPlay.setImageResource(R.mipmap.ic_play_circle_outline_black_48dp);
+        mPause = true;
     }
 
     private SeekBar.OnSeekBarChangeListener mOnSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
@@ -62,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-            CourseAudioPlayer.getInstance().setPlayProgress(MainActivity.this, seekBar.getProgress());
+            AudioPlayerController.getInstance().setPlayProgress(MainActivity.this, seekBar.getProgress());
             mDraggingSeekBar = false;
         }
     };
@@ -107,9 +186,8 @@ public class MainActivity extends AppCompatActivity {
         String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
         Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
-
-        if (cursor != null && cursor.getCount() > 0) {
-            audioList = new ArrayList<>();
+        List<Audio> audioList = new ArrayList<>();
+        if (cursor != null) {
             while (cursor.moveToNext()) {
                 String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
@@ -117,19 +195,20 @@ public class MainActivity extends AppCompatActivity {
                 String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
                 audioList.add(new Audio(data, title, album, artist));
             }
+            cursor.close();
         }
-        cursor.close();
+        mAudioList.addAll(audioList);
     }
 
     private void initRecyclerView() {
-        rvAudio = (RecyclerView) findViewById(R.id.rv_audio);
-        AudioAdapter adapter = new AudioAdapter(this, audioList);
-        rvAudio.setAdapter(adapter);
-        rvAudio.setLayoutManager(new LinearLayoutManager(this));
-        rvAudio.addOnItemTouchListener(new OnRecyclerViewItemTouchListener(rvAudio, new OnRecyclerViewItemClickListener() {
+        mRvAudio = (RecyclerView) findViewById(R.id.rv_audio);
+        AudioAdapter adapter = new AudioAdapter(this, mAudioList);
+        mRvAudio.setAdapter(adapter);
+        mRvAudio.setLayoutManager(new LinearLayoutManager(this));
+        mRvAudio.addOnItemTouchListener(new OnRecyclerViewItemTouchListener(mRvAudio, new OnRecyclerViewItemClickListener() {
             @Override
             public void onItemClick(RecyclerView rv, View childView, int position) {
-                CourseAudioPlayer.getInstance().playList(MainActivity.this, audioList, position, 0);
+                play(position);
             }
 
             @Override
@@ -140,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private CourseAudioPlayer.OnPlayListener mOnPlayListener = new CourseAudioPlayer.OnPlayListener() {
+    private AudioPlayerController.OnPlayListener mOnPlayListener = new AudioPlayerController.OnPlayListener() {
         @Override
         public void onProgressChanged(int currentPosition, int length) {
             if (!mDraggingSeekBar) {

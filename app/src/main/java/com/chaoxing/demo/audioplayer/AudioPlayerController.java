@@ -12,14 +12,14 @@ import java.util.Map;
  * Created by HuWei on 2017/6/14.
  */
 
-public class CourseAudioPlayer {
+public class AudioPlayerController {
 
-    private static CourseAudioPlayer sInstance = new CourseAudioPlayer();
+    private static AudioPlayerController sInstance = new AudioPlayerController();
 
-    private CourseAudioPlayer() {
+    private AudioPlayerController() {
     }
 
-    public static CourseAudioPlayer getInstance() {
+    public static AudioPlayerController getInstance() {
         return sInstance;
     }
 
@@ -30,10 +30,35 @@ public class CourseAudioPlayer {
         return audioPlayer;
     }
 
-    public void playList(Activity activity, ArrayList<Audio> audioList, int index, int position) {
+    public void play(Activity activity, ArrayList<Audio> audioList, int index, int position) {
         AudioPlayerService audioPlayer = getAudioPlayer(activity);
-        audioPlayer.setOnProgressChangedListener(mOnProgressChangedListener);
+        audioPlayer.setOnPositionChangedListener(mOnProgressChangedListener);
         AudioPlayerService.play(activity, audioList, index, position);
+    }
+
+    public void resumePlay(Activity activity) {
+        AudioPlayerService audioPlayer = getAudioPlayer(activity);
+        audioPlayer.resumePlay();
+    }
+
+    public void parsePlay(Activity activity) {
+        AudioPlayerService audioPlayer = getAudioPlayer(activity);
+        audioPlayer.pausePlay();
+    }
+
+    public boolean isPause(Activity activity) {
+        AudioPlayerService audioPlayer = getAudioPlayer(activity);
+        return audioPlayer.isPause();
+    }
+
+    public void previous(Activity activity) {
+        AudioPlayerService audioPlayer = getAudioPlayer(activity);
+        audioPlayer.previous();
+    }
+
+    public void next(Activity activity) {
+        AudioPlayerService audioPlayer = getAudioPlayer(activity);
+        audioPlayer.next();
     }
 
     public void setPlayProgress(Activity activity, int progress) {
@@ -41,9 +66,9 @@ public class CourseAudioPlayer {
         audioPlayer.updatePlayPosition(progress);
     }
 
-    private AudioPlayerService.OnProgressChangedListener mOnProgressChangedListener = new AudioPlayerService.OnProgressChangedListener() {
+    private AudioPlayerService.OnPositionChangedListener mOnProgressChangedListener = new AudioPlayerService.OnPositionChangedListener() {
         @Override
-        public void onProgressChanged(int currentPosition, int length) {
+        public void onPositionChanged(int currentPosition, int length) {
             Iterator<Map.Entry<Context, OnPlayListener>> it = mOnPlayListenerMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<Context, OnPlayListener> entry = it.next();

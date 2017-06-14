@@ -45,7 +45,7 @@ public class BaseApplication extends Application {
     private ServiceConnection mAudioServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            AudioPlayerService.LocalBinder binder = (AudioPlayerService.LocalBinder) service;
+            AudioPlayerService.AudioPlayerBinder binder = (AudioPlayerService.AudioPlayerBinder) service;
             mAudioPlayer = binder.getService();
             mAudioServiceBound = true;
         }
