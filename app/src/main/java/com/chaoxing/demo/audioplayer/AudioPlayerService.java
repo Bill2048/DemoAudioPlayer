@@ -15,6 +15,8 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -155,11 +157,23 @@ public class AudioPlayerService extends Service {
 
         if (mActiveAudio != null) {
             try {
-                mMediaPlayer.setDataSource(mActiveAudio.getData());
+                String path = mActiveAudio.getData();
+//                String path = "/storage/emulated/0/netease/cloudmusic/Music/Alan Walker - Faded (Instrumental).mp3";
+                File filePath = new File(path);
+
+                boolean b = filePath.exists();
+                if (!filePath.exists())
+                {
+//                    filePath.createNewFile();
+                }
+
+                FileInputStream is = new FileInputStream(filePath);
+                mMediaPlayer.setDataSource(is.getFD());
+                is.close();
+                mMediaPlayer.prepareAsync();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            mMediaPlayer.prepareAsync();
         }
     }
 
@@ -182,7 +196,7 @@ public class AudioPlayerService extends Service {
     private void pauseMedia() {
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
-            mActivePosition = mMediaPlayer.getCurrentPosition();
+//            mActivePosition = mMediaPlayer.getCurrentPosition();
             mPause = true;
         }
     }
@@ -190,7 +204,7 @@ public class AudioPlayerService extends Service {
     private void resumeMedia() {
         if (mPause) {
             if (!mMediaPlayer.isPlaying()) {
-                mMediaPlayer.seekTo(mActivePosition);
+//                mMediaPlayer.seekTo(mActivePosition);
                 mMediaPlayer.start();
             }
         }
