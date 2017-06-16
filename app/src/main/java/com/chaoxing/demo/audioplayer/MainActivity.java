@@ -168,6 +168,9 @@ public class MainActivity extends AppCompatActivity {
         String fProgress = AudioPlayerUtils.formatTime(progress);
         int count = 0;
         do {
+            if (fLength.indexOf("00:") != 0) {
+                break;
+            }
             String str = fLength.replaceFirst("00:", "");
             if (!str.equals(fLength)) {
                 count++;
@@ -177,6 +180,9 @@ public class MainActivity extends AppCompatActivity {
             }
         } while (true);
         while (count > 0) {
+            if (fLength.indexOf("00:") != 0) {
+                break;
+            }
             fProgress = fProgress.replaceFirst("00:", "");
             count--;
         }
