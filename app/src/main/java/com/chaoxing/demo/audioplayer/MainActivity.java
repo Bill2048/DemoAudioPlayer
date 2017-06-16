@@ -2,8 +2,11 @@ package com.chaoxing.demo.audioplayer;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatSeekBar;
@@ -21,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mRvAudio;
     private ArrayList<Audio> mAudioList = new ArrayList<>();
+    private AudioAdapter mAdapter;
 
     private TextView mTvProgress;
     private TextView mTvLength;
@@ -180,30 +184,58 @@ public class MainActivity extends AppCompatActivity {
         mTvProgress.setText(fProgress);
     }
 
+    private Handler mHandler = new Handler();
+
     private void loadAudio() {
-        ContentResolver contentResolver = getContentResolver();
-        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
-        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-        Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
-        List<Audio> audioList = new ArrayList<>();
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
-                String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                audioList.add(new Audio(data, title, album, artist));
+        MediaScannerConnection.scanFile(this, new String[]{Environment.getExternalStorageDirectory().getAbsolutePath()}, new String[]{"audio/mpeg"}, new MediaScannerConnection.OnScanCompletedListener() {
+            @Override
+            public void onScanCompleted(String path, Uri uri) {
+                if (MainActivity.this.isFinishing()) {
+                    return;
+                }
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ContentResolver contentResolver = getContentResolver();
+                        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
+                        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+                        Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
+                        final List<Audio> audioList = new ArrayList<>();
+                        if (cursor != null) {
+                            while (cursor.moveToNext()) {
+                                String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                                String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+                                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+                                String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                                audioList.add(new Audio(data, title, album, artist));
+                            }
+                            cursor.close();
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (!MainActivity.this.isFinishing()) {
+                                        mAudioList.addAll(audioList);
+                                        int position = 0;
+                                        LinearLayoutManager layoutManager = (LinearLayoutManager) mRvAudio.getLayoutManager();
+                                        if (mRvAudio.getAdapter() != null) {
+                                            position = layoutManager.findFirstVisibleItemPosition();
+                                        }
+                                        mRvAudio.setAdapter(mAdapter);
+                                        layoutManager.scrollToPosition(position);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }).start();
             }
-            cursor.close();
-        }
-        mAudioList.addAll(audioList);
+        });
     }
 
     private void initRecyclerView() {
         mRvAudio = (RecyclerView) findViewById(R.id.rv_audio);
-        AudioAdapter adapter = new AudioAdapter(this, mAudioList);
-        mRvAudio.setAdapter(adapter);
+        mAdapter = new AudioAdapter(this, mAudioList);
         mRvAudio.setLayoutManager(new LinearLayoutManager(this));
         mRvAudio.addOnItemTouchListener(new OnRecyclerViewItemTouchListener(mRvAudio, new OnRecyclerViewItemClickListener() {
             @Override
