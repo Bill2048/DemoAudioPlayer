@@ -2,6 +2,9 @@ package com.chaoxing.demo.audioplayer;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.PixelFormat;
+import android.view.Gravity;
+import android.view.WindowManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +24,36 @@ public class AudioPlayerController {
 
     public static AudioPlayerController getInstance() {
         return sInstance;
+    }
+
+    public void launchPlayerFloatWindow(Context context) {
+        AudioPlayerFloatWindow window = new AudioPlayerFloatWindow(context);
+        WindowManager windowManager = (WindowManager) context.getSystemService("window");
+        WindowManager.LayoutParams wmLayoutParams = new WindowManager.LayoutParams();
+//        以下都是WindowManager.LayoutParams的相关属性
+//        具体用途可参考SDK文档
+        wmLayoutParams.type = WindowManager.LayoutParams.TYPE_TOAST;   //设置window type
+        wmLayoutParams.format = PixelFormat.RGBA_8888;   //设置图片格式，效果为背景透明
+
+        //设置Window flag
+//        wmLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+//                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+//        下面的flags属性的效果形同“锁定”。
+//        悬浮窗不可触摸，不接受任何事件, 同时不影响后面的事件响应。
+        wmLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+
+
+        wmLayoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;   //调整悬浮窗口至左上角，便于调整坐标
+        //以屏幕左上角为原点，设置x、y初始值
+//        wmLayoutParams.x = 0;
+//        wmLayoutParams.y = 0;
+        //设置悬浮窗口长宽数据
+//        wmLayoutParams.width = 400;
+//        wmLayoutParams.height = 400;
+        //显示myFloatView图像
+        windowManager.addView(window, wmLayoutParams);
     }
 
     private AudioPlayerService getAudioPlayer(Activity activity) {

@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         AudioPlayerController.getInstance().addOnPlayListener(this, mOnPlayListener);
         loadAudio();
         initRecyclerView();
+        AudioPlayerController.getInstance().launchPlayerFloatWindow(this.getApplicationContext());
     }
 
     private void initView() {
