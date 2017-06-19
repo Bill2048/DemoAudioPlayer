@@ -8,11 +8,20 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="TransparentCircleImageButton" parent="Base.Widget.AppCompat.ImageButton">
-        <item name="android:background">@drawable/cs_transparent_btn_default_material</item>
+    <style name="TransparentHighlightButton" parent="Base.Widget.AppCompat.Button">
+        <item name="android:background">@drawable/ripple_highlight</item>
         <item name="android:layout_marginBottom">4dp</item>
         <item name="android:layout_marginTop">4dp</item>
         <item name="android:layout_marginLeft">4dp</item>
         <item name="android:layout_marginRight">4dp</item>
     </style>
+
+    <style name="TransparentWhiteButton" parent="Base.Widget.AppCompat.Button">
+        <item name="android:background">@drawable/ripple_white</item>
+        <item name="android:layout_marginBottom">4dp</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:layout_marginLeft">4dp</item>
+        <item name="android:layout_marginRight">4dp</item>
+    </style>
+
 </resources>

@@ -6,7 +6,6 @@ import android.os.Build;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.AppCompatSeekBar;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -27,7 +26,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
 
     private TextView mTvProgress;
     private TextView mTvLength;
-    private AppCompatSeekBar mSbProgress;
+    private SeekBar mSbProgress;
 
     private ImageButton mIbPrevious;
     private ImageButton mIbPlay;
@@ -56,7 +55,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         mContentView = LayoutInflater.from(getContext()).inflate(R.layout.audio_player_window, this, true);
         mTvProgress = (TextView) mContentView.findViewById(R.id.tv_progress);
         mTvLength = (TextView) mContentView.findViewById(R.id.tv_length);
-        mSbProgress = (AppCompatSeekBar) mContentView.findViewById(R.id.sb_progress);
+        mSbProgress = (SeekBar) mContentView.findViewById(R.id.sb_progress);
         mSbProgress.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
         updateProgress(0, 0);
 

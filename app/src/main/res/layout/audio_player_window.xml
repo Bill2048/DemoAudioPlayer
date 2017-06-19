@@ -22,9 +22,9 @@
             android:textColor="@android:color/white"
             android:textSize="11sp" />
 
-        <android.support.v7.widget.AppCompatSeekBar
+        <SeekBar
             android:id="@+id/sb_progress"
-            style="@style/Base.Widget.AppCompat.SeekBar"
+
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -59,8 +59,8 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1">
 
-                <android.support.v7.widget.AppCompatImageButton
-                    style="@style/TransparentCircleImageButton"
+                <ImageButton
+                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
@@ -73,9 +73,9 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1">
 
-                <android.support.v7.widget.AppCompatImageButton
+                <ImageButton
                     android:id="@+id/ib_previous"
-                    style="@style/TransparentCircleImageButton"
+                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
@@ -88,9 +88,9 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1">
 
-                <android.support.v7.widget.AppCompatImageButton
+                <ImageButton
                     android:id="@+id/ib_play"
-                    style="@style/TransparentCircleImageButton"
+                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
@@ -103,9 +103,9 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1">
 
-                <android.support.v7.widget.AppCompatImageButton
+                <ImageButton
                     android:id="@+id/ib_next"
-                    style="@style/TransparentCircleImageButton"
+                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
@@ -118,8 +118,8 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1">
 
-                <android.support.v7.widget.AppCompatImageButton
-                    style="@style/TransparentCircleImageButton"
+                <ImageButton
+                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
