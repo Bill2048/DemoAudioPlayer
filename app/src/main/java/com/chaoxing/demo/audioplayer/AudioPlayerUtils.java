@@ -16,38 +16,22 @@ public class AudioPlayerUtils {
     }
 
     public static String trimTime(String timeStr) {
-        return trimTime(timeStr, 3);
+        return timeStr.replaceFirst("00:", "");
     }
 
-    public static String trimTime(String timeStr, int count) {
-        while (count > 0) {
-            if (timeStr.indexOf("00:") != 0) {
+    public static String[] formatTimeLength(String... timeArr) {
+        String[] result = new String[timeArr.length];
+        boolean trim = true;
+        for (String time : timeArr) {
+            if (time.indexOf("00:") != 0) {
+                trim = false;
                 break;
             }
-            timeStr = timeStr.replaceFirst("00:", "");
-            count--;
         }
-        return timeStr;
-    }
-
-    public static String[] formatTimeLength(String[] timeArr) {
-        String[] result = new String[timeArr.length];
-        int minCount = 3;
-        for (String time : timeArr) {
-            int count = 0;
-            do {
-                if (time.indexOf("00:") != 0) {
-                    break;
-                }
-                time = time.replaceFirst("00:", "");
-                count++;
-            } while (true);
-            if (count < minCount) {
-                minCount = count;
+        if (trim) {
+            for (int i = 0; i < timeArr.length; i++) {
+                result[i] = trimTime(timeArr[i]);
             }
-        }
-        for (int i = 0; i < timeArr.length; i++) {
-            result[i] = trimTime(timeArr[i], minCount);
         }
         return result;
     }
