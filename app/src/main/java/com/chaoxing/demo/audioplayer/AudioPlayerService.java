@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -16,10 +17,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by huwei on 2017/6/11.
@@ -41,8 +39,6 @@ public class AudioPlayerService extends Service {
     private PhoneStateListener mPhoneStateListener;
     private TelephonyManager mTelephonyManager;
 
-    private List<Audio> mAudioList = new ArrayList<>();  // 当前播放列表
-    private int mActiveIndex = -1;  // 当前音频在列表中的下标
     private Audio mActiveAudio;  // 当前播放音频
     private int mActivePosition;  // 当前音频暂停播放位置
 
@@ -93,7 +89,6 @@ public class AudioPlayerService extends Service {
         super.onDestroy();
 
         stopMedia();
-        mAudioList.clear();
 
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
@@ -108,36 +103,6 @@ public class AudioPlayerService extends Service {
         }
 
         unregisterReceiver(mPlayReceiver);
-    }
-
-    private void playList(List<Audio> audioList, int index, int position) {
-        stopMedia();
-        mAudioList.clear();
-        mAudioList.addAll(audioList);
-        play(index, position);
-    }
-
-    private void play(int index, int position) {
-        if (index < 0 || index >= mAudioList.size()) {
-            stopMedia();
-        } else {
-            mActiveIndex = index;
-            mActiveAudio = mAudioList.get(mActiveIndex);
-            mActivePosition = position;
-            initMediaPlayer();
-        }
-    }
-
-    private void playPrevious() {
-        int index = mActiveIndex - 1;
-        stopMedia();
-        play(index, 0);
-    }
-
-    private void playNext() {
-        int index = mActiveIndex + 1;
-        stopMedia();
-        play(index, 0);
     }
 
     private void initMediaPlayer() {
@@ -158,23 +123,31 @@ public class AudioPlayerService extends Service {
         if (mActiveAudio != null) {
             try {
                 String path = mActiveAudio.getData();
-//                String path = "/storage/emulated/0/netease/cloudmusic/Music/Alan Walker - Faded (Instrumental).mp3";
-                File filePath = new File(path);
-
-                boolean b = filePath.exists();
-                if (!filePath.exists())
-                {
-//                    filePath.createNewFile();
+                if (path == null || path.trim().length() == 0) {
+                    return;
                 }
 
-                FileInputStream is = new FileInputStream(filePath);
-                mMediaPlayer.setDataSource(is.getFD());
-                is.close();
+                final Uri uri = Uri.parse(path);
+                final String scheme = uri.getScheme();
+                if ("file".equals(scheme)) {
+                    File audioFile = new File(path);
+                    if (!audioFile.exists()) {
+                        return;
+                    }
+                }
+                mMediaPlayer.setDataSource(path);
                 mMediaPlayer.prepareAsync();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void play(Audio audio, int position) {
+        stopMedia();
+        mActiveAudio = audio;
+        mActivePosition = position;
+        initMediaPlayer();
     }
 
     private void playMedia() {
@@ -185,7 +158,6 @@ public class AudioPlayerService extends Service {
 
     private void stopMedia() {
         mHandler.removeCallbacks(mUpdatePositionRunnable);
-        mActiveIndex = -1;
         mActiveAudio = null;
         mActivePosition = 0;
         if (mMediaPlayer != null) {
@@ -196,7 +168,6 @@ public class AudioPlayerService extends Service {
     private void pauseMedia() {
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
-//            mActivePosition = mMediaPlayer.getCurrentPosition();
             mPause = true;
         }
     }
@@ -204,7 +175,6 @@ public class AudioPlayerService extends Service {
     private void resumeMedia() {
         if (mPause) {
             if (!mMediaPlayer.isPlaying()) {
-//                mMediaPlayer.seekTo(mActivePosition);
                 mMediaPlayer.start();
             }
         }
@@ -316,27 +286,20 @@ public class AudioPlayerService extends Service {
             switch (focusChange) {
                 // 获得音频焦点
                 case AudioManager.AUDIOFOCUS_GAIN:
-                    // resume playback
                     if (mMediaPlayer == null) initMediaPlayer();
                     else if (!mMediaPlayer.isPlaying()) mMediaPlayer.start();
                     mMediaPlayer.setVolume(1.0f, 1.0f);
                     break;
                 // 失去音频焦点（可以降低音量继续播放）
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    // Lost focus for a short time, but it's ok to keep playing
-                    // at an attenuated level
                     if (mMediaPlayer.isPlaying()) mMediaPlayer.setVolume(0.1f, 0.1f);
                     break;
                 // 暂时失去音频焦点（停止播放，短时间可能再次获得音频焦点）
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    // Lost focus for a short time, but we have to stop
-                    // playback. We don't release the media player because playback
-                    // is likely to resume
                     if (mMediaPlayer.isPlaying()) mMediaPlayer.pause();
                     break;
                 // 长时间失去音频焦点（停止播放，释放资源）
                 case AudioManager.AUDIOFOCUS_LOSS:
-                    // Lost focus for an unbounded amount of time: stop playback and release media player
                     if (mMediaPlayer.isPlaying()) mMediaPlayer.stop();
                     mMediaPlayer.release();
                     mMediaPlayer = null;
@@ -381,7 +344,7 @@ public class AudioPlayerService extends Service {
     private MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            playNext();
+
         }
     };
 
@@ -391,19 +354,17 @@ public class AudioPlayerService extends Service {
         }
     }
 
-    public final static String PLAY_ARGS_PLAY_LIST = "playList";
-    public final static String PLAY_ARGS_INDEX = "index";
+
+    public static final String BROADCAST_PLAY_NEW_AUDIO = "com.chaoxing.mobile.audioplayer.PlayNewAudio";
+    public final static String PLAY_ARGS_AUDIO = "audio";
     public final static String PLAY_ARGS_POSITION = "position";
 
-    public static void play(Context context, ArrayList<Audio> playList, int index, int position) {
+    public static void play(Context context, Audio audio, int position) {
         Intent intent = new Intent(AudioPlayerService.BROADCAST_PLAY_NEW_AUDIO);
-        intent.putParcelableArrayListExtra(PLAY_ARGS_PLAY_LIST, playList);
-        intent.putExtra(PLAY_ARGS_INDEX, index);
+        intent.putExtra(PLAY_ARGS_AUDIO, audio);
         intent.putExtra(PLAY_ARGS_POSITION, position);
         context.sendBroadcast(intent);
     }
-
-    public static final String BROADCAST_PLAY_NEW_AUDIO = "com.chaoxing.mobile.audioplayer.PlayNewAudio";
 
     private void registerPlayReceiver() {
         IntentFilter filter = new IntentFilter(BROADCAST_PLAY_NEW_AUDIO);
@@ -413,10 +374,9 @@ public class AudioPlayerService extends Service {
     private BroadcastReceiver mPlayReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            List<Audio> audioList = intent.getParcelableArrayListExtra(PLAY_ARGS_PLAY_LIST);
-            int index = intent.getIntExtra(PLAY_ARGS_INDEX, 0);
+            Audio audio = intent.getParcelableExtra(PLAY_ARGS_AUDIO);
             int position = intent.getIntExtra(PLAY_ARGS_POSITION, 0);
-            playList(audioList, index, position);
+            play(audio, position);
         }
     };
 
@@ -432,24 +392,6 @@ public class AudioPlayerService extends Service {
             return;
         }
         resumeMedia();
-    }
-
-    public void previous() {
-        if (mMediaPlayer == null) {
-            return;
-        }
-        if (mMediaPlayer.isPlaying() || mPause) {
-            playPrevious();
-        }
-    }
-
-    public void next() {
-        if (mMediaPlayer == null) {
-            return;
-        }
-        if (mMediaPlayer.isPlaying() || mPause) {
-            playNext();
-        }
     }
 
     public boolean isPause() {

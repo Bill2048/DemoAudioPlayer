@@ -36,10 +36,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initView();
-//        AudioPlayerController.getInstance().addOnPlayListener(this, mOnPlayListener);
-        loadAudio();
         initRecyclerView();
-        AudioPlayerController.getInstance().showFloatWindow(this.getApplicationContext());
+        AudioPlayerController.getInstance().bindMediaService(this);
+        loadAudio();
     }
 
     private void initView() {
@@ -53,10 +52,6 @@ public class MainActivity extends AppCompatActivity {
 
         }
     };
-
-
-
-
 
 
     private Handler mHandler = new Handler();
@@ -98,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                         mRvAudio.setAdapter(mAdapter);
                                         layoutManager.scrollToPosition(position);
+                                        AudioPlayerController.getInstance().play(mAudioList, 0);
                                     }
                                 }
                             });
@@ -124,15 +120,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }));
     }
-
-
-//    private AudioPlayerController.OnPlayListener mOnPlayListener = new AudioPlayerController.OnPlayListener() {
-//        @Override
-//        public void onProgressChanged(int currentPosition, int length) {
-//            if (!mDraggingSeekBar) {
-//                updateProgress(currentPosition, length);
-//            }
-//        }
-//    };
 
 }

@@ -67,7 +67,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         mIbNext.setOnClickListener(mOnClickListener);
     }
 
-    public void launch() {
+    public void setup() {
         WindowManager windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
 
         int width = WindowManager.LayoutParams.MATCH_PARENT;
@@ -75,8 +75,8 @@ public class AudioPlayerFloatWindow extends FrameLayout {
 
         int flags = 0;
 
-        // FLAG_NOT_FOCUSABLE:弹出的View收不到Back键的事件
         // FLAG_NOT_TOUCH_MODAL:不拦截后面的事件
+        // FLAG_NOT_FOCUSABLE:弹出的View收不到Back键的事件
 
         flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
@@ -143,7 +143,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         }
     };
 
-    private void updateProgress(int progress, int length) {
+    public void updateProgress(int progress, int length) {
         if (length < 0) {
             length = 0;
         }
@@ -188,4 +188,5 @@ public class AudioPlayerFloatWindow extends FrameLayout {
     public void switchOnPause() {
         mIbPlay.setImageResource(R.drawable.ic_play_circle_outline_white_48dp);
     }
+
 }
