@@ -51,7 +51,7 @@ public class AudioPlayerService extends Service {
         super.onCreate();
 
         callStateListener();
-        requestAudioFocus();
+//        requestAudioFocus();
         registerPlayReceiver();
     }
 

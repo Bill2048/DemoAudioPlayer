@@ -8,20 +8,14 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="TransparentHighlightButton" parent="Base.Widget.AppCompat.Button">
-        <item name="android:background">@drawable/ripple_highlight</item>
-        <item name="android:layout_marginBottom">4dp</item>
-        <item name="android:layout_marginTop">4dp</item>
-        <item name="android:layout_marginLeft">4dp</item>
-        <item name="android:layout_marginRight">4dp</item>
-    </style>
-
-    <style name="TransparentWhiteButton" parent="Base.Widget.AppCompat.Button">
-        <item name="android:background">@drawable/ripple_white</item>
-        <item name="android:layout_marginBottom">4dp</item>
-        <item name="android:layout_marginTop">4dp</item>
-        <item name="android:layout_marginLeft">4dp</item>
-        <item name="android:layout_marginRight">4dp</item>
+    <style name="SeekBar" parent="android:Widget">
+        <item name="android:indeterminateOnly">false</item>
+        <item name="android:progressDrawable">@drawable/cabc_seekbar_track_material</item>
+        <item name="android:indeterminateDrawable">@drawable/cabc_seekbar_track_material</item>
+        <item name="android:thumb">@drawable/cabc_seekbar_thumb_material</item>
+        <item name="android:focusable">true</item>
+        <item name="android:paddingLeft">16dip</item>
+        <item name="android:paddingRight">16dip</item>
     </style>
 
 </resources>

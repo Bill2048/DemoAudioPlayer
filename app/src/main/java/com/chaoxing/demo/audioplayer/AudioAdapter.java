@@ -5,7 +5,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
@@ -65,7 +64,6 @@ public class AudioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         View itemView;
         ViewSwitcher vsLeft;
         TextView tvNumber;
-        ImageView ivStatus;
 
         TextView tvTitle;
         TextView tvArtist;
@@ -75,7 +73,6 @@ public class AudioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             this.itemView = itemView;
             vsLeft = (ViewSwitcher) itemView.findViewById(R.id.vs_left);
             tvNumber = (TextView) itemView.findViewById(R.id.tv_number);
-            ivStatus = (ImageView) itemView.findViewById(R.id.iv_status);
 
             tvTitle = (TextView) itemView.findViewById(R.id.tv_title);
             tvArtist = (TextView) itemView.findViewById(R.id.tv_artist);

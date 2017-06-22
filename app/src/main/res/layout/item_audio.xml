@@ -39,13 +39,6 @@
                     android:textSize="13sp"
                     tools:text="999" />
 
-                <ImageView
-                    android:id="@+id/iv_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_volume_up_black_18dp" />
 
             </ViewSwitcher>
 

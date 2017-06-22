@@ -1,6 +1,5 @@
 package com.chaoxing.demo.audioplayer;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +20,7 @@ public class AudioPlayerController {
     private boolean mAudioServiceBound;
     private AudioPlayerService mAudioPlayer;
     private AudioPlayerFloatWindow mPlayerWindow;
+    private PlaylistFloatWindow mPlaylistWindow;
 
     private List<Audio> mAudioList = new ArrayList<>();
     private int mActiveIndex = 1;
@@ -61,6 +61,8 @@ public class AudioPlayerController {
             mAudioPlayer = binder.getService();
             mAudioServiceBound = true;
             launchFloatWindow(mAudioPlayer.getApplicationContext());
+            ((BaseApplication) mAudioPlayer.getApplication()).addAppForegroundBackgroundSwitchListener(mAppForegroundBackgroundSwitchListener);
+            loadLocalAudio();
         }
 
         @Override
@@ -69,6 +71,46 @@ public class AudioPlayerController {
         }
     };
 
+    BaseApplication.AppForegroundBackgroundSwitchListener mAppForegroundBackgroundSwitchListener = new BaseApplication.AppForegroundBackgroundSwitchListener() {
+        @Override
+        public void onForeground() {
+            if (mPlayerWindow != null) {
+                mPlayerWindow.show();
+            }
+        }
+
+        @Override
+        public void onBackground() {
+            if (mPlaylistWindow != null) {
+                mPlaylistWindow.hide();
+            }
+            if (mPlayerWindow != null) {
+                mPlayerWindow.hide();
+            }
+        }
+    };
+
+    private void loadLocalAudio() {
+        AudioPlayerUtils.scanLocalAudio(mAudioPlayer.getApplicationContext(), new AudioPlayerUtils.ScanLocalAudioCallbacks() {
+            @Override
+            public void onStart() {
+                mPlayerWindow.showLoading();
+            }
+
+            @Override
+            public void onCompletionInBackground(final List<Audio> audioList) {
+                if (mPlayerWindow != null) {
+                    mPlayerWindow.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mPlayerWindow.hideLoading();
+                            play(audioList, 0);
+                        }
+                    });
+                }
+            }
+        });
+    }
 
     private void play(int index) {
         if (index < 0) {
@@ -80,13 +122,16 @@ public class AudioPlayerController {
         }
         mActiveIndex = index;
         if (mActiveIndex >= 0) {
-            AudioPlayerService.play(mAudioPlayer.getApplicationContext(), mAudioList.get(index), 0);
-            mPlayerWindow.switchOnPlay();
             mPlayStatus = STATUS_PLAY;
+            Audio audio = mAudioList.get(index);
+            AudioPlayerService.play(mAudioPlayer.getApplicationContext(), audio, 0);
+            mPlayerWindow.switchOnPlay();
+            mPlayerWindow.setTitle(audio.getTitle());
+            mPlaylistWindow.notifyActiveIndex(mActiveIndex, audio);
         }
     }
 
-    private AudioPlayerFloatWindow.OnOperationListener mOnOperationListener = new AudioPlayerFloatWindow.OnOperationListener() {
+    private PlayCallbacks mPlayCallbacks = new PlayCallbacks() {
         @Override
         public void onPlay() {
             if (mPlayStatus == STATUS_PLAY) {
@@ -103,6 +148,11 @@ public class AudioPlayerController {
         }
 
         @Override
+        public void onPlay(int index) {
+            play(index);
+        }
+
+        @Override
         public void onPrevious() {
             previousPlay();
         }
@@ -115,6 +165,11 @@ public class AudioPlayerController {
         @Override
         public void onProgressChanged(int progress) {
             setPlayProgress(progress);
+        }
+
+        @Override
+        public void onShowPlaylist() {
+            mPlaylistWindow.show();
         }
     };
 
@@ -130,12 +185,16 @@ public class AudioPlayerController {
     public void launchFloatWindow(Context context) {
         if (mPlayerWindow == null) {
             mPlayerWindow = new AudioPlayerFloatWindow(context.getApplicationContext());
-            mPlayerWindow.setOnOperationListener(mOnOperationListener);
             mPlayerWindow.setup();
+            mPlayerWindow.setPlayCallbacks(mPlayCallbacks);
+
+            mPlaylistWindow = new PlaylistFloatWindow(context.getApplicationContext());
+            mPlaylistWindow.setup(false);
+            mPlaylistWindow.setPlayCallbacks(mPlayCallbacks);
         }
     }
 
-    public void play(ArrayList<Audio> audioList, int index) {
+    public void play(List<Audio> audioList, int index) {
         if (!mAudioServiceBound) {
             return;
         }
@@ -144,6 +203,8 @@ public class AudioPlayerController {
         mAudioList.addAll(audioList);
 
         mAudioPlayer.setOnPositionChangedListener(mOnProgressChangedListener);
+
+        mPlaylistWindow.notifyPlaylist(audioList);
 
         play(index);
     }
@@ -162,7 +223,7 @@ public class AudioPlayerController {
         mPlayStatus = STATUS_PAUSE;
     }
 
-    public boolean isPause(Activity activity) {
+    public boolean isPause() {
         return mPlayStatus == STATUS_PAUSE || mPlayStatus == STATUS_STOP;
     }
 

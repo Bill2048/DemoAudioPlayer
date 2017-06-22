@@ -1,56 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/black"
-    android:orientation="vertical">
+    android:background="#FFFAFAFA">
 
     <LinearLayout
+        android:id="@+id/player"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="02:13"
-            android:textColor="@android:color/white"
-            android:textSize="11sp" />
-
-        <SeekBar
-            android:id="@+id/sb_progress"
-
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:progress="50" />
-
-        <TextView
-            android:id="@+id/tv_length"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="04:12"
-            android:textColor="@android:color/white"
-            android:textSize="11sp" />
-    </LinearLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp">
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="#33000000" />
 
         <LinearLayout
             android:id="@+id/option_panel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
+            android:layout_marginTop="12dp"
             android:weightSum="5">
 
             <RelativeLayout
@@ -60,11 +31,13 @@
                 android:layout_weight="1">
 
                 <ImageButton
-                    style="@style/TransparentWhiteButton"
+                    android:id="@+id/ib_close"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
-                    android:visibility="invisible" />
+                    android:background="@drawable/ripple_gray"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_close_gray_12dp" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -75,11 +48,12 @@
 
                 <ImageButton
                     android:id="@+id/ib_previous"
-                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
-                    android:src="@drawable/ic_skip_previous_white_36dp" />
+                    android:background="@drawable/ripple_gray"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_skip_previous_gray_16dp" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -90,11 +64,12 @@
 
                 <ImageButton
                     android:id="@+id/ib_play"
-                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
-                    android:src="@drawable/ic_play_circle_outline_white_48dp" />
+                    android:background="@drawable/ripple_gray"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_play_circle_outline_gray_13dp" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -105,11 +80,12 @@
 
                 <ImageButton
                     android:id="@+id/ib_next"
-                    style="@style/TransparentWhiteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
-                    android:src="@drawable/ic_skip_next_white_36dp" />
+                    android:background="@drawable/ripple_gray"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_skip_next_gray_16dp" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -119,14 +95,89 @@
                 android:layout_weight="1">
 
                 <ImageButton
-                    style="@style/TransparentWhiteButton"
+                    android:id="@+id/ib_zoom"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
-                    android:src="@drawable/ic_playlist_play_white_36dp" />
+                    android:background="@drawable/ripple_gray"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_zoom_out_gray_16dp" />
             </RelativeLayout>
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingBottom="8dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="8dp"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            tools:text="歌曲名称" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp">
+
+            <TextView
+                android:id="@+id/tv_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="02:13"
+                android:textColor="#FF808080"
+                android:textSize="9sp" />
+
+            <SeekBar
+                android:id="@+id/sb_progress"
+                style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:progress="50" />
+
+            <TextView
+                android:id="@+id/tv_length"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="04:12"
+                android:textColor="#FF808080"
+                android:textSize="9sp" />
+
+            <ImageButton
+                android:id="@+id/ib_playlist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="16dp"
+                android:background="@drawable/ripple_gray"
+                android:padding="8dp"
+                android:src="@drawable/ic_playlist_play_gray_18dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/loading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/player"
+        android:layout_alignTop="@+id/player"
+        android:background="#33000000">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" />
     </RelativeLayout>
-</LinearLayout>
+
+</RelativeLayout>

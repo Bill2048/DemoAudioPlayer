@@ -22,19 +22,26 @@ import android.widget.TextView;
 
 public class AudioPlayerFloatWindow extends FrameLayout {
 
-    protected View mContentView;
+    protected View mContainer;
+
+    private ImageButton mIbPrevious;
+    private ImageButton mIbPlay;
+    private ImageButton mIbNext;
+    private ImageButton mIbClose;
+    private ImageButton mIbZoom;
+    private ImageButton mIbPlaylist;
+
+    private TextView mTvTitle;
 
     private TextView mTvProgress;
     private TextView mTvLength;
     private SeekBar mSbProgress;
 
-    private ImageButton mIbPrevious;
-    private ImageButton mIbPlay;
-    private ImageButton mIbNext;
+    private View mLoading;
 
     private boolean mDraggingSeekBar;
 
-    private OnOperationListener onOperationListener;
+    private PlayCallbacks mPlayCallbacks;
 
     public AudioPlayerFloatWindow(@NonNull Context context) {
         super(context);
@@ -52,19 +59,30 @@ public class AudioPlayerFloatWindow extends FrameLayout {
     }
 
     protected void init() {
-        mContentView = LayoutInflater.from(getContext()).inflate(R.layout.audio_player_window, this, true);
-        mTvProgress = (TextView) mContentView.findViewById(R.id.tv_progress);
-        mTvLength = (TextView) mContentView.findViewById(R.id.tv_length);
-        mSbProgress = (SeekBar) mContentView.findViewById(R.id.sb_progress);
+        mContainer = LayoutInflater.from(getContext()).inflate(R.layout.audio_player_window, this, true);
+
+        mIbPrevious = (ImageButton) mContainer.findViewById(R.id.ib_previous);
+        mIbPrevious.setOnClickListener(mOnClickListener);
+        mIbPlay = (ImageButton) mContainer.findViewById(R.id.ib_play);
+        mIbPlay.setOnClickListener(mOnClickListener);
+        mIbNext = (ImageButton) mContainer.findViewById(R.id.ib_next);
+        mIbNext.setOnClickListener(mOnClickListener);
+        mIbClose = (ImageButton) mContainer.findViewById(R.id.ib_close);
+        mIbClose.setOnClickListener(mOnClickListener);
+        mIbZoom = (ImageButton) mContainer.findViewById(R.id.ib_zoom);
+        mIbZoom.setOnClickListener(mOnClickListener);
+        mIbPlaylist = (ImageButton) mContainer.findViewById(R.id.ib_playlist);
+        mIbPlaylist.setOnClickListener(mOnClickListener);
+
+        mTvTitle = (TextView) mContainer.findViewById(R.id.tv_title);
+
+        mTvProgress = (TextView) mContainer.findViewById(R.id.tv_progress);
+        mTvLength = (TextView) mContainer.findViewById(R.id.tv_length);
+        mSbProgress = (SeekBar) mContainer.findViewById(R.id.sb_progress);
         mSbProgress.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
         updateProgress(0, 0);
-
-        mIbPrevious = (ImageButton) mContentView.findViewById(R.id.ib_previous);
-        mIbPrevious.setOnClickListener(mOnClickListener);
-        mIbPlay = (ImageButton) mContentView.findViewById(R.id.ib_play);
-        mIbPlay.setOnClickListener(mOnClickListener);
-        mIbNext = (ImageButton) mContentView.findViewById(R.id.ib_next);
-        mIbNext.setOnClickListener(mOnClickListener);
+        mLoading = mContainer.findViewById(R.id.loading);
+        mLoading.setVisibility(View.GONE);
     }
 
     public void setup() {
@@ -105,16 +123,24 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         public void onClick(View v) {
             int id = v.getId();
             if (id == R.id.ib_previous) {
-                if (onOperationListener != null) {
-                    onOperationListener.onPrevious();
+                if (mPlayCallbacks != null) {
+                    mPlayCallbacks.onPrevious();
                 }
             } else if (id == R.id.ib_play) {
-                if (onOperationListener != null) {
-                    onOperationListener.onPlay();
+                if (mPlayCallbacks != null) {
+                    mPlayCallbacks.onPlay();
                 }
             } else if (id == R.id.ib_next) {
-                if (onOperationListener != null) {
-                    onOperationListener.onNext();
+                if (mPlayCallbacks != null) {
+                    mPlayCallbacks.onNext();
+                }
+            } else if (id == R.id.ib_close) {
+
+            } else if (id == R.id.ib_zoom) {
+                hide();
+            } else if (id == R.id.ib_playlist) {
+                if (mPlayCallbacks != null) {
+                    mPlayCallbacks.onShowPlaylist();
                 }
             }
         }
@@ -136,14 +162,17 @@ public class AudioPlayerFloatWindow extends FrameLayout {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-            if (onOperationListener != null) {
-                onOperationListener.onProgressChanged(seekBar.getProgress());
+            if (mPlayCallbacks != null) {
+                mPlayCallbacks.onProgressChanged(seekBar.getProgress());
             }
             mDraggingSeekBar = false;
         }
     };
 
     public void updateProgress(int progress, int length) {
+        if (mDraggingSeekBar) {
+            return;
+        }
         if (length < 0) {
             length = 0;
         }
@@ -164,29 +193,37 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         mTvLength.setText(timeArr[1]);
     }
 
-    public interface OnOperationListener {
 
-        void onPlay();
-
-        void onPrevious();
-
-        void onNext();
-
-        void onProgressChanged(int progress);
-
+    public void setPlayCallbacks(PlayCallbacks playCallbacks) {
+        this.mPlayCallbacks = playCallbacks;
     }
 
-    public void setOnOperationListener(OnOperationListener onOperationListener) {
-        this.onOperationListener = onOperationListener;
+    public void hide() {
+        mContainer.setVisibility(View.GONE);
     }
 
+    public void show() {
+        mContainer.setVisibility(View.VISIBLE);
+    }
+
+    public void showLoading() {
+        mLoading.setVisibility(View.VISIBLE);
+    }
+
+    public void hideLoading() {
+        mLoading.setVisibility(View.GONE);
+    }
 
     public void switchOnPlay() {
-        mIbPlay.setImageResource(R.drawable.ic_pause_circle_outline_white_48dp);
+        mIbPlay.setImageResource(R.drawable.ic_pause_circle_outline_gray_13dp);
     }
 
     public void switchOnPause() {
-        mIbPlay.setImageResource(R.drawable.ic_play_circle_outline_white_48dp);
+        mIbPlay.setImageResource(R.drawable.ic_play_circle_outline_gray_13dp);
+    }
+
+    public void setTitle(String title) {
+        mTvTitle.setText(title);
     }
 
 }
