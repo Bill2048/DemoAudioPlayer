@@ -21,6 +21,7 @@ public class AudioPlayerController {
     private AudioPlayerService mAudioPlayer;
     private AudioPlayerFloatWindow mPlayerWindow;
     private PlaylistFloatWindow mPlaylistWindow;
+    private MusicFloatSwitch mMusicSwitch;
 
     private List<Audio> mAudioList = new ArrayList<>();
     private int mActiveIndex = 1;
@@ -191,6 +192,10 @@ public class AudioPlayerController {
             mPlaylistWindow = new PlaylistFloatWindow(context.getApplicationContext());
             mPlaylistWindow.setup(false);
             mPlaylistWindow.setPlayCallbacks(mPlayCallbacks);
+
+            mMusicSwitch = new MusicFloatSwitch(context.getApplicationContext());
+            mMusicSwitch.setup(true);
+
         }
     }
 

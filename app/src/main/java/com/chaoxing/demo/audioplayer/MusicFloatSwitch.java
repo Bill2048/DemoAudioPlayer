@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -38,12 +39,15 @@ public class MusicFloatSwitch extends FrameLayout {
 
     private void init() {
         mContainer = LayoutInflater.from(getContext()).inflate(R.layout.music_float_switch, this, true);
+        mContainer.setOnTouchListener(mOnTouchListener);
     }
 
-    public void setup(boolean front) {
-        WindowManager windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+    private WindowManager windowManager;
 
-        int width = WindowManager.LayoutParams.MATCH_PARENT;
+    public void setup(boolean front) {
+        windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+
+        int width = WindowManager.LayoutParams.WRAP_CONTENT;
         int height = WindowManager.LayoutParams.WRAP_CONTENT;
 
         int flags = 0;
@@ -68,14 +72,54 @@ public class MusicFloatSwitch extends FrameLayout {
             type = WindowManager.LayoutParams.TYPE_PHONE;
         }
 
-        WindowManager.LayoutParams wmLayoutParams = new WindowManager.LayoutParams(width, height, type, flags, PixelFormat.RGBA_8888);
-        wmLayoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        windowManager.addView(this, wmLayoutParams);
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, height, type, flags, PixelFormat.RGBA_8888);
+        lp.gravity = Gravity.TOP | Gravity.LEFT;
+        lp.x = 0;
+        lp.y = 0;
+        windowManager.addView(this, lp);
 
         if (!front) {
             mContainer.setVisibility(View.GONE);
         }
     }
+
+    private int originalX;
+    private int originalY;
+    private int offsetX;
+    private int offsetY;
+
+    private OnTouchListener mOnTouchListener = new OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            switch (motionEvent.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    int[] location = new int[2];
+                    mContainer.getLocationOnScreen(location);
+                    originalX = location[0];
+                    originalY = location[1];
+                    offsetX = (int) motionEvent.getRawX();
+                    offsetY = (int) motionEvent.getRawY();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    int dx = (int) motionEvent.getRawX() - offsetX;
+                    int dy = (int) motionEvent.getRawY() - offsetY;
+                    WindowManager.LayoutParams params = (WindowManager.LayoutParams) mContainer.getLayoutParams();
+                    originalX = originalX + dx;
+                    originalY = originalY + dy;
+                    params.x = originalX;
+                    params.y = originalY;
+                    windowManager.updateViewLayout(mContainer, params);
+                    offsetX = (int) motionEvent.getRawX();
+                    offsetY = (int) motionEvent.getRawY();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    break;
+                default:
+                    break;
+            }
+            return false;
+        }
+    };
 
     public void show() {
         mContainer.setVisibility(View.VISIBLE);
