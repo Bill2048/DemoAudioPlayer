@@ -15,7 +15,7 @@ import java.util.List;
 
 public class AudioPlayerController {
 
-    private static AudioPlayerController sInstance = new AudioPlayerController();
+    private static AudioPlayerController sInstance;
 
     private boolean mAudioServiceBound;
     private AudioPlayerService mAudioPlayer;
@@ -36,6 +36,13 @@ public class AudioPlayerController {
     }
 
     public static AudioPlayerController getInstance() {
+        if (sInstance == null) {
+            synchronized (AudioPlayerController.class) {
+                if (sInstance == null) {
+                    sInstance = new AudioPlayerController();
+                }
+            }
+        }
         return sInstance;
     }
 
@@ -54,16 +61,14 @@ public class AudioPlayerController {
             mAudioPlayer.stopSelf();
             if (mPlayerWindow != null) {
                 mPlayerWindow.release();
-                mPlayerWindow = null;
             }
             if (mPlaylistWindow != null) {
                 mPlaylistWindow.release();
-                mPlaylistWindow = null;
             }
             if (mPlayerSwitch != null) {
                 mPlayerSwitch.release();
-                mPlayerSwitch = null;
             }
+            sInstance = null;
         }
     }
 
