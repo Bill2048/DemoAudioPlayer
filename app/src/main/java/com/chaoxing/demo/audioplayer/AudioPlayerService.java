@@ -42,7 +42,7 @@ public class AudioPlayerService extends Service {
     private Audio mActiveAudio;  // 当前播放音频
     private int mActivePosition;  // 当前音频暂停播放位置
 
-    private OnPositionChangedListener onPositionChangedListener;  // 播放进度
+    private OnPlayStatusChangedListener mOnPlayStatusChangedListener;  // 播放进度
 
     private boolean mPause;  // 当前是否暂停
 
@@ -137,6 +137,9 @@ public class AudioPlayerService extends Service {
                 }
                 mMediaPlayer.setDataSource(path);
                 mMediaPlayer.prepareAsync();
+                if (mOnPlayStatusChangedListener != null) {
+                    mOnPlayStatusChangedListener.onStart();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -154,14 +157,21 @@ public class AudioPlayerService extends Service {
         if (!mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
         }
+        updatePosition(0);
+        if (mOnPlayStatusChangedListener != null) {
+            mOnPlayStatusChangedListener.onStart();
+        }
     }
 
     private void stopMedia() {
-        mHandler.removeCallbacks(mUpdatePositionRunnable);
+        removePositionListener();
         mActiveAudio = null;
         mActivePosition = 0;
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
+        }
+        if (mOnPlayStatusChangedListener != null) {
+            mOnPlayStatusChangedListener.onStop();
         }
     }
 
@@ -169,6 +179,10 @@ public class AudioPlayerService extends Service {
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
             mPause = true;
+        }
+        removePositionListener();
+        if (mOnPlayStatusChangedListener != null) {
+            mOnPlayStatusChangedListener.onPause();
         }
     }
 
@@ -179,21 +193,29 @@ public class AudioPlayerService extends Service {
             }
         }
         mPause = false;
+        updatePosition(0);
+        if (mOnPlayStatusChangedListener != null) {
+            mOnPlayStatusChangedListener.onStart();
+        }
     }
 
     private int updatePosition(int position) {
-        if (mMediaPlayer == null)
+        if (mMediaPlayer == null) {
             return -1;
-
+        }
         position = position > 0 ? position : mMediaPlayer.getCurrentPosition();
         int length = mMediaPlayer.getDuration();
 
-        if (onPositionChangedListener != null) {
-            onPositionChangedListener.onPositionChanged(position, length);
+        if (mOnPlayStatusChangedListener != null) {
+            mOnPlayStatusChangedListener.onPlayPositionChanged(position, length);
         }
-        mHandler.removeCallbacks(mUpdatePositionRunnable);
+        removePositionListener();
         mHandler.postDelayed(mUpdatePositionRunnable, 1000);
         return position;
+    }
+
+    private void removePositionListener() {
+        mHandler.removeCallbacks(mUpdatePositionRunnable);
     }
 
     private Runnable mUpdatePositionRunnable = new Runnable() {
@@ -203,13 +225,6 @@ public class AudioPlayerService extends Service {
         }
     };
 
-    public interface OnPositionChangedListener {
-        void onPositionChanged(int currentPosition, int length);
-    }
-
-    public void setOnPositionChangedListener(OnPositionChangedListener onPositionChangedListener) {
-        this.onPositionChangedListener = onPositionChangedListener;
-    }
 
     private MediaPlayer.OnErrorListener onErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
@@ -249,7 +264,6 @@ public class AudioPlayerService extends Service {
                 mMediaPlayer.seekTo(mActivePosition);
             }
             playMedia();
-            updatePosition(0);
         }
     };
 
@@ -263,7 +277,15 @@ public class AudioPlayerService extends Service {
     private MediaPlayer.OnSeekCompleteListener onSeekCompleteListener = new MediaPlayer.OnSeekCompleteListener() {
         @Override
         public void onSeekComplete(MediaPlayer mp) {
-
+            if (isPause()) {
+                resumePlay();
+            } else {
+                mMediaPlayer.start();
+                updatePosition(0);
+                if (mOnPlayStatusChangedListener != null) {
+                    mOnPlayStatusChangedListener.onStart();
+                }
+            }
         }
     };
 
@@ -344,7 +366,10 @@ public class AudioPlayerService extends Service {
     private MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-
+            stopMedia();
+            if (mOnPlayStatusChangedListener != null) {
+                mOnPlayStatusChangedListener.onCompleted();
+            }
         }
     };
 
@@ -354,6 +379,9 @@ public class AudioPlayerService extends Service {
         }
     }
 
+    public void setOnPlayStatusChangedListener(OnPlayStatusChangedListener onPlayStatusChangedListener) {
+        this.mOnPlayStatusChangedListener = onPlayStatusChangedListener;
+    }
 
     public static final String BROADCAST_PLAY_NEW_AUDIO = "com.chaoxing.mobile.audioplayer.PlayNewAudio";
     public final static String PLAY_ARGS_AUDIO = "audio";
@@ -402,6 +430,7 @@ public class AudioPlayerService extends Service {
         if (mMediaPlayer == null) {
             return;
         }
+        removePositionListener();
         int length = mMediaPlayer.getDuration();
         if (position > length) {
             position = length;

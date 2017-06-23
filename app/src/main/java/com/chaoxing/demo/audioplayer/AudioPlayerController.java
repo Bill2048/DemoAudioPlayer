@@ -72,6 +72,7 @@ public class AudioPlayerController {
         public void onServiceConnected(ComponentName name, IBinder service) {
             AudioPlayerService.AudioPlayerBinder binder = (AudioPlayerService.AudioPlayerBinder) service;
             mAudioPlayer = binder.getService();
+            mAudioPlayer.setOnPlayStatusChangedListener(mOnPlayStatusChangedListener);
             mAudioServiceBound = true;
             launchFloatWindow(mAudioPlayer.getApplicationContext());
             ((BaseApplication) mAudioPlayer.getApplication()).addAppForegroundBackgroundSwitchListener(mAppForegroundBackgroundSwitchListener);
@@ -146,7 +147,7 @@ public class AudioPlayerController {
         @Override
         public void onPlay() {
             if (mPlayStatus == STATUS_PLAY) {
-                parsePlay();
+                pausePlay();
             } else if (mPlayStatus == STATUS_PAUSE) {
                 if (mAudioPlayer.isPause()) {
                     resumePlay();
@@ -214,10 +215,33 @@ public class AudioPlayerController {
         }
     };
 
-    private AudioPlayerService.OnPositionChangedListener mOnProgressChangedListener = new AudioPlayerService.OnPositionChangedListener() {
+    OnPlayStatusChangedListener mOnPlayStatusChangedListener = new OnPlayStatusChangedListener() {
         @Override
-        public void onPositionChanged(int position, int length) {
+        public void onStart() {
+            mPlayStatus = STATUS_PLAY;
+            updatePlayerByStatus();
+        }
+
+        @Override
+        public void onPause() {
+            mPlayStatus = STATUS_PAUSE;
+            updatePlayerByStatus();
+        }
+
+        @Override
+        public void onStop() {
+            mPlayStatus = STATUS_STOP;
+            updatePlayerByStatus();
+        }
+
+        @Override
+        public void onPlayPositionChanged(int position, int length) {
             mPlayerWindow.updateProgress(position, length);
+        }
+
+        @Override
+        public void onCompleted() {
+            nextPlay();
         }
     };
 
@@ -232,11 +256,22 @@ public class AudioPlayerController {
         mActiveIndex = index;
         if (mActiveIndex >= 0) {
             mPlayStatus = STATUS_PLAY;
-            Audio audio = mAudioList.get(index);
+            updatePlayerByStatus();
+            Audio audio = mAudioList.get(mActiveIndex);
             AudioPlayerService.play(mAudioPlayer.getApplicationContext(), audio, 0);
+        }
+    }
+
+    private void updatePlayerByStatus() {
+        if (mPlayStatus == STATUS_PLAY) {
             mPlayerWindow.switchOnPlay();
+            Audio audio = mAudioList.get(mActiveIndex);
             mPlayerWindow.setTitle(audio.getTitle());
             mPlaylistWindow.notifyActiveIndex(mActiveIndex, audio);
+        } else if (mPlayStatus == STATUS_PAUSE) {
+            mPlayerWindow.switchOnPause();
+        } else if (mPlayStatus == STATUS_STOP) {
+            mPlayerWindow.switchOnPause();
         }
     }
 
@@ -248,9 +283,7 @@ public class AudioPlayerController {
         mAudioList.clear();
         mAudioList.addAll(audioList);
 
-        mAudioPlayer.setOnPositionChangedListener(mOnProgressChangedListener);
-
-        mPlaylistWindow.notifyPlaylist(audioList);
+        mPlaylistWindow.notifyPlaylist(index, audioList);
 
         play(index);
     }
@@ -258,15 +291,11 @@ public class AudioPlayerController {
     public void resumePlay() {
         if (mAudioPlayer.isPause()) {
             mAudioPlayer.resumePlay();
-            mPlayerWindow.switchOnPlay();
-            mPlayStatus = STATUS_PLAY;
         }
     }
 
-    public void parsePlay() {
+    public void pausePlay() {
         mAudioPlayer.pausePlay();
-        mPlayerWindow.switchOnPause();
-        mPlayStatus = STATUS_PAUSE;
     }
 
     public boolean isPause() {

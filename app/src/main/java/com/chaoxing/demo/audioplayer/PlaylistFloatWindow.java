@@ -156,7 +156,8 @@ public class PlaylistFloatWindow extends FrameLayout {
         mContainer.setVisibility(View.GONE);
     }
 
-    public void notifyPlaylist(List<Audio> audioList) {
+    public void notifyPlaylist(int index, List<Audio> audioList) {
+        mActiveIndex = index;
         mAudioList.clear();
         mAudioList.addAll(audioList);
         mAdapter.notifyDataSetChanged();
