@@ -22,6 +22,8 @@ import android.widget.TextView;
 
 public class AudioPlayerFloatWindow extends FrameLayout {
 
+    private WindowManager mWindowManager;
+
     protected View mContainer;
 
     private ImageButton mIbPrevious;
@@ -42,6 +44,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
     private boolean mDraggingSeekBar;
 
     private PlayCallbacks mPlayCallbacks;
+    private ControllerCallbacks mControllerCallbacks;
 
     public AudioPlayerFloatWindow(@NonNull Context context) {
         super(context);
@@ -86,7 +89,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
     }
 
     public void setup() {
-        WindowManager windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
 
         int width = WindowManager.LayoutParams.MATCH_PARENT;
         int height = WindowManager.LayoutParams.WRAP_CONTENT;
@@ -115,7 +118,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
 
         WindowManager.LayoutParams wmLayoutParams = new WindowManager.LayoutParams(width, height, type, flags, PixelFormat.RGBA_8888);
         wmLayoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        windowManager.addView(this, wmLayoutParams);
+        mWindowManager.addView(this, wmLayoutParams);
     }
 
     private OnClickListener mOnClickListener = new OnClickListener() {
@@ -135,12 +138,16 @@ public class AudioPlayerFloatWindow extends FrameLayout {
                     mPlayCallbacks.onNext();
                 }
             } else if (id == R.id.ib_close) {
-
+                if (mControllerCallbacks != null) {
+                    mControllerCallbacks.onRelease();
+                }
             } else if (id == R.id.ib_zoom) {
-                hide();
+                if (mControllerCallbacks != null) {
+                    mControllerCallbacks.onHideWindow();
+                }
             } else if (id == R.id.ib_playlist) {
-                if (mPlayCallbacks != null) {
-                    mPlayCallbacks.onShowPlaylist();
+                if (mControllerCallbacks != null) {
+                    mControllerCallbacks.onShowPlaylist();
                 }
             }
         }
@@ -168,6 +175,14 @@ public class AudioPlayerFloatWindow extends FrameLayout {
             mDraggingSeekBar = false;
         }
     };
+
+    public interface ControllerCallbacks {
+        void onShowPlaylist();
+
+        void onHideWindow();
+
+        void onRelease();
+    }
 
     public void updateProgress(int progress, int length) {
         if (mDraggingSeekBar) {
@@ -198,6 +213,10 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         this.mPlayCallbacks = playCallbacks;
     }
 
+    public void setControllerCallbacks(ControllerCallbacks controllerCallbacks) {
+        this.mControllerCallbacks = controllerCallbacks;
+    }
+
     public void hide() {
         mContainer.setVisibility(View.GONE);
     }
@@ -226,4 +245,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         mTvTitle.setText(title);
     }
 
+    public void release() {
+        mWindowManager.removeView(this);
+    }
 }

@@ -27,6 +27,8 @@ import java.util.List;
 
 public class PlaylistFloatWindow extends FrameLayout {
 
+    private WindowManager mWindowManager;
+
     private View mContainer;
 
     private TextView mTvTitle;
@@ -73,7 +75,7 @@ public class PlaylistFloatWindow extends FrameLayout {
     }
 
     public void setup(boolean front) {
-        WindowManager windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
 
         int width = WindowManager.LayoutParams.MATCH_PARENT;
         int height = WindowManager.LayoutParams.MATCH_PARENT;
@@ -92,7 +94,7 @@ public class PlaylistFloatWindow extends FrameLayout {
 
         WindowManager.LayoutParams wmLayoutParams = new WindowManager.LayoutParams(width, height, type, flags, PixelFormat.RGBA_8888);
         wmLayoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        windowManager.addView(this, wmLayoutParams);
+        mWindowManager.addView(this, wmLayoutParams);
         if (!front) {
             mContainer.setVisibility(View.GONE);
         }
@@ -165,4 +167,7 @@ public class PlaylistFloatWindow extends FrameLayout {
         mAdapter.notifyDataSetChanged();
     }
 
+    public void release() {
+        mWindowManager.removeView(this);
+    }
 }

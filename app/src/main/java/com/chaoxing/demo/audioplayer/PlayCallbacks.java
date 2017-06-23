@@ -16,6 +16,4 @@ public interface PlayCallbacks {
 
     void onProgressChanged(int progress);
 
-    void onShowPlaylist();
-
 }

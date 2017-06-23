@@ -21,7 +21,7 @@ public class AudioPlayerController {
     private AudioPlayerService mAudioPlayer;
     private AudioPlayerFloatWindow mPlayerWindow;
     private PlaylistFloatWindow mPlaylistWindow;
-    private MusicFloatSwitch mMusicSwitch;
+    private AudioPlayerFloatSwitch mPlayerSwitch;
 
     private List<Audio> mAudioList = new ArrayList<>();
     private int mActiveIndex = 1;
@@ -52,6 +52,18 @@ public class AudioPlayerController {
             context.getApplicationContext().unbindService(mAudioServiceConnection);
             mAudioServiceBound = false;
             mAudioPlayer.stopSelf();
+            if (mPlayerWindow != null) {
+                mPlayerWindow.release();
+                mPlayerWindow = null;
+            }
+            if (mPlaylistWindow != null) {
+                mPlaylistWindow.release();
+                mPlaylistWindow = null;
+            }
+            if (mPlayerSwitch != null) {
+                mPlayerSwitch.release();
+                mPlayerSwitch = null;
+            }
         }
     }
 
@@ -72,16 +84,32 @@ public class AudioPlayerController {
         }
     };
 
+    private void launchFloatWindow(Context context) {
+        mPlayerWindow = new AudioPlayerFloatWindow(context.getApplicationContext());
+        mPlayerWindow.setup();
+        mPlayerWindow.setPlayCallbacks(mPlayCallbacks);
+        mPlayerWindow.setControllerCallbacks(mControllerCallbacks);
+
+        mPlaylistWindow = new PlaylistFloatWindow(context.getApplicationContext());
+        mPlaylistWindow.setup(false);
+        mPlaylistWindow.setPlayCallbacks(mPlayCallbacks);
+
+        mPlayerSwitch = new AudioPlayerFloatSwitch(context.getApplicationContext());
+        mPlayerSwitch.setup(false);
+        mPlayerSwitch.setOnSwitchListener(mOnSwitchListener);
+    }
+
     BaseApplication.AppForegroundBackgroundSwitchListener mAppForegroundBackgroundSwitchListener = new BaseApplication.AppForegroundBackgroundSwitchListener() {
         @Override
         public void onForeground() {
-            if (mPlayerWindow != null) {
-                mPlayerWindow.show();
-            }
+
         }
 
         @Override
         public void onBackground() {
+            if (mPlayerSwitch != null) {
+                mPlayerSwitch.show();
+            }
             if (mPlaylistWindow != null) {
                 mPlaylistWindow.hide();
             }
@@ -113,24 +141,6 @@ public class AudioPlayerController {
         });
     }
 
-    private void play(int index) {
-        if (index < 0) {
-            index = 0;
-        }
-
-        if (index >= mAudioList.size()) {
-            index = -1;
-        }
-        mActiveIndex = index;
-        if (mActiveIndex >= 0) {
-            mPlayStatus = STATUS_PLAY;
-            Audio audio = mAudioList.get(index);
-            AudioPlayerService.play(mAudioPlayer.getApplicationContext(), audio, 0);
-            mPlayerWindow.switchOnPlay();
-            mPlayerWindow.setTitle(audio.getTitle());
-            mPlaylistWindow.notifyActiveIndex(mActiveIndex, audio);
-        }
-    }
 
     private PlayCallbacks mPlayCallbacks = new PlayCallbacks() {
         @Override
@@ -168,9 +178,39 @@ public class AudioPlayerController {
             setPlayProgress(progress);
         }
 
+    };
+
+    private AudioPlayerFloatWindow.ControllerCallbacks mControllerCallbacks = new AudioPlayerFloatWindow.ControllerCallbacks() {
         @Override
         public void onShowPlaylist() {
-            mPlaylistWindow.show();
+            if (mPlaylistWindow != null) {
+                mPlaylistWindow.show();
+            }
+        }
+
+        @Override
+        public void onHideWindow() {
+            mPlayerWindow.hide();
+            if (mPlayerSwitch != null) {
+                mPlayerSwitch.show();
+            }
+        }
+
+        @Override
+        public void onRelease() {
+            if (mAudioServiceBound) {
+                unBindAudioService(mAudioPlayer.getApplicationContext());
+            }
+        }
+    };
+
+    private AudioPlayerFloatSwitch.OnSwitchListener mOnSwitchListener = new AudioPlayerFloatSwitch.OnSwitchListener() {
+        @Override
+        public void onSwitch() {
+            mPlayerSwitch.hide();
+            if (mPlayerWindow != null) {
+                mPlayerWindow.show();
+            }
         }
     };
 
@@ -178,24 +218,25 @@ public class AudioPlayerController {
         @Override
         public void onPositionChanged(int position, int length) {
             mPlayerWindow.updateProgress(position, length);
-
         }
     };
 
+    private void play(int index) {
+        if (index < 0) {
+            index = 0;
+        }
 
-    public void launchFloatWindow(Context context) {
-        if (mPlayerWindow == null) {
-            mPlayerWindow = new AudioPlayerFloatWindow(context.getApplicationContext());
-            mPlayerWindow.setup();
-            mPlayerWindow.setPlayCallbacks(mPlayCallbacks);
-
-            mPlaylistWindow = new PlaylistFloatWindow(context.getApplicationContext());
-            mPlaylistWindow.setup(false);
-            mPlaylistWindow.setPlayCallbacks(mPlayCallbacks);
-
-            mMusicSwitch = new MusicFloatSwitch(context.getApplicationContext());
-            mMusicSwitch.setup(true);
-
+        if (index >= mAudioList.size()) {
+            index = -1;
+        }
+        mActiveIndex = index;
+        if (mActiveIndex >= 0) {
+            mPlayStatus = STATUS_PLAY;
+            Audio audio = mAudioList.get(index);
+            AudioPlayerService.play(mAudioPlayer.getApplicationContext(), audio, 0);
+            mPlayerWindow.switchOnPlay();
+            mPlayerWindow.setTitle(audio.getTitle());
+            mPlaylistWindow.notifyActiveIndex(mActiveIndex, audio);
         }
     }
 
