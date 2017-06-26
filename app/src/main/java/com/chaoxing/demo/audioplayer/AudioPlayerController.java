@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.media.MediaPlayer;
 import android.os.IBinder;
 
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class AudioPlayerController {
         mPlayerWindow = new AudioPlayerFloatWindow(context.getApplicationContext());
         mPlayerWindow.setup();
         mPlayerWindow.setPlayCallbacks(mPlayCallbacks);
-        mPlayerWindow.setControllerCallbacks(mControllerCallbacks);
+        mPlayerWindow.setOperationCallbacks(mOperationCallbacks);
 
         mPlaylistWindow = new PlaylistFloatWindow(context.getApplicationContext());
         mPlaylistWindow.setup(false);
@@ -186,7 +187,7 @@ public class AudioPlayerController {
 
     };
 
-    private AudioPlayerFloatWindow.ControllerCallbacks mControllerCallbacks = new AudioPlayerFloatWindow.ControllerCallbacks() {
+    private OperationCallbacks mOperationCallbacks = new OperationCallbacks() {
         @Override
         public void onShowPlaylist() {
             if (mPlaylistWindow != null) {
@@ -247,6 +248,42 @@ public class AudioPlayerController {
         @Override
         public void onCompleted() {
             nextPlay();
+        }
+    };
+
+    private ErrorHandler errorHandler = new ErrorHandler() {
+        @Override
+        public boolean onErrorWithMediaPlayer(int what, int extra) {
+            switch (what) {
+                // 文件不存在或错误，或网络不可访问错误
+                case MediaPlayer.MEDIA_ERROR_IO:
+                    break;
+                // 流不符合有关标准或文件的编码规范
+                case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                    break;
+                // 视频流及其容器不适用于连续播放视频的指标（例如：MOOV原子）不在文件的开始
+                case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
+                    break;
+                // 媒体服务器挂掉了
+                case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+                    break;
+                // 一些操作使用了过长的时间，也就是超时了，通常是超过了3-5秒
+                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                    break;
+                // 未知错误
+                case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                    break;
+                // 比特流符合相关编码标准或文件的规格，但媒体框架不支持此功能
+                case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                    break;
+                default:break;
+            }
+            return false;
+        }
+
+        @Override
+        public void onError(Exception e) {
+
         }
     };
 

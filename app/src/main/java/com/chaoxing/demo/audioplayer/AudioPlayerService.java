@@ -17,7 +17,6 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by huwei on 2017/6/11.
@@ -45,6 +44,8 @@ public class AudioPlayerService extends Service {
     private OnPlayStatusChangedListener mOnPlayStatusChangedListener;  // 播放进度
 
     private boolean mPause;  // 当前是否暂停
+
+    private ErrorHandler mErrorHandler;
 
     @Override
     public void onCreate() {
@@ -140,8 +141,11 @@ public class AudioPlayerService extends Service {
                 if (mOnPlayStatusChangedListener != null) {
                     mOnPlayStatusChangedListener.onStart();
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
+                if (mErrorHandler != null) {
+                    mErrorHandler.onError(e);
+                }
             }
         }
     }
@@ -229,6 +233,9 @@ public class AudioPlayerService extends Service {
     private MediaPlayer.OnErrorListener onErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
+            if (mErrorHandler != null) {
+                return mErrorHandler.onErrorWithMediaPlayer(what, extra);
+            }
             switch (what) {
                 case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
                     Log.d("MediaPlayer Error", "MEDIA ERROR NOT VALID FOR PROGRESSIVE PLAYBACK " + extra);
@@ -407,6 +414,10 @@ public class AudioPlayerService extends Service {
             play(audio, position);
         }
     };
+
+    public void setErrorHandler(ErrorHandler errorHandler) {
+        this.mErrorHandler = errorHandler;
+    }
 
     public void pausePlay() {
         if (mMediaPlayer == null) {

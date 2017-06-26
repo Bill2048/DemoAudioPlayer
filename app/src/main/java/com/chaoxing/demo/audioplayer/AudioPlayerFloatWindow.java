@@ -44,7 +44,7 @@ public class AudioPlayerFloatWindow extends FrameLayout {
     private boolean mDraggingSeekBar;
 
     private PlayCallbacks mPlayCallbacks;
-    private ControllerCallbacks mControllerCallbacks;
+    private OperationCallbacks mOperationCallbacks;
 
     public AudioPlayerFloatWindow(@NonNull Context context) {
         super(context);
@@ -138,16 +138,16 @@ public class AudioPlayerFloatWindow extends FrameLayout {
                     mPlayCallbacks.onNext();
                 }
             } else if (id == R.id.ib_close) {
-                if (mControllerCallbacks != null) {
-                    mControllerCallbacks.onRelease();
+                if (mOperationCallbacks != null) {
+                    mOperationCallbacks.onRelease();
                 }
             } else if (id == R.id.ib_zoom) {
-                if (mControllerCallbacks != null) {
-                    mControllerCallbacks.onHideWindow();
+                if (mOperationCallbacks != null) {
+                    mOperationCallbacks.onHideWindow();
                 }
             } else if (id == R.id.ib_playlist) {
-                if (mControllerCallbacks != null) {
-                    mControllerCallbacks.onShowPlaylist();
+                if (mOperationCallbacks != null) {
+                    mOperationCallbacks.onShowPlaylist();
                 }
             }
         }
@@ -175,14 +175,6 @@ public class AudioPlayerFloatWindow extends FrameLayout {
             mDraggingSeekBar = false;
         }
     };
-
-    public interface ControllerCallbacks {
-        void onShowPlaylist();
-
-        void onHideWindow();
-
-        void onRelease();
-    }
 
     public void updateProgress(int progress, int length) {
         if (mDraggingSeekBar) {
@@ -213,8 +205,8 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         this.mPlayCallbacks = playCallbacks;
     }
 
-    public void setControllerCallbacks(ControllerCallbacks controllerCallbacks) {
-        this.mControllerCallbacks = controllerCallbacks;
+    public void setOperationCallbacks(OperationCallbacks operationCallbacks) {
+        this.mOperationCallbacks = operationCallbacks;
     }
 
     public void hide() {
