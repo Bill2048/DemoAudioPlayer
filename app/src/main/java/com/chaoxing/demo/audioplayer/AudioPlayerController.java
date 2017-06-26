@@ -140,6 +140,11 @@ public class AudioPlayerController {
                         @Override
                         public void run() {
                             mPlayerWindow.hideLoading();
+                            Audio audio = new Audio();
+                            audio.setData("http://dl.stream.qqmusic.qq.com/C400003jX9iw0DCQY3.m4a?vkey=F0BF97EACD19FC8B8CA0D7DB92605FE5C8BE204C2940BAC36AA30EC1C698BCA2251DC6B874FAECC44ED19F67B51D3701276DE124DB017111&guid=1781924256&uin=920132&fromtag=66");
+                            audio.setTitle("刚好遇见你");
+                            audio.setArtist("李玉刚");
+                            audioList.add(0, audio);
                             play(audioList, 0);
                         }
                     });
@@ -345,21 +350,14 @@ public class AudioPlayerController {
     }
 
     public void previousPlay() {
-        if (mPlayStatus == STATUS_STOP) {
-            play(mActiveIndex);
-        } else {
-            mActiveIndex--;
-            play(mActiveIndex);
-        }
+        mActiveIndex--;
+        play(mActiveIndex);
     }
 
     public void nextPlay() {
-        if (mPlayStatus == STATUS_STOP) {
-            play(mActiveIndex);
-        } else {
-            mActiveIndex++;
-            play(mActiveIndex);
-        }
+        mActiveIndex++;
+        play(mActiveIndex);
+
     }
 
     public void setPlayProgress(int progress) {

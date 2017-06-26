@@ -373,7 +373,6 @@ public class AudioPlayerService extends Service {
     private MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            stopMedia();
             if (mOnPlayStatusChangedListener != null) {
                 mOnPlayStatusChangedListener.onCompleted();
             }
