@@ -79,6 +79,7 @@ public class AudioPlayerController {
             AudioPlayerService.AudioPlayerBinder binder = (AudioPlayerService.AudioPlayerBinder) service;
             mAudioPlayer = binder.getService();
             mAudioPlayer.setOnPlayStatusChangedListener(mOnPlayStatusChangedListener);
+            mAudioPlayer.setErrorHandler(mErrorHandler);
             mAudioServiceBound = true;
             launchFloatWindow(mAudioPlayer.getApplicationContext());
             ((BaseApplication) mAudioPlayer.getApplication()).addAppForegroundBackgroundSwitchListener(mAppForegroundBackgroundSwitchListener);
@@ -141,9 +142,8 @@ public class AudioPlayerController {
                         public void run() {
                             mPlayerWindow.hideLoading();
                             Audio audio = new Audio();
-                            audio.setData("http://dl.stream.qqmusic.qq.com/C400003jX9iw0DCQY3.m4a?vkey=F0BF97EACD19FC8B8CA0D7DB92605FE5C8BE204C2940BAC36AA30EC1C698BCA2251DC6B874FAECC44ED19F67B51D3701276DE124DB017111&guid=1781924256&uin=920132&fromtag=66");
-                            audio.setTitle("刚好遇见你");
-                            audio.setArtist("李玉刚");
+                            audio.setData("http://s1.ananas.chaoxing.com/audio/a9/7ca3f4cb058055ccf5e4933d8c30766e/audio.mp3");
+                            audio.setTitle("单田芳 - 水浒外传 - 第022回.MP3");
                             audioList.add(0, audio);
                             play(audioList, 0);
                         }
@@ -247,7 +247,7 @@ public class AudioPlayerController {
 
         @Override
         public void onPlayPositionChanged(int position, int length) {
-            mPlayerWindow.updateProgress(position, length);
+            mPlayerWindow.notifyProgressChanged(position, length);
         }
 
         @Override
@@ -256,39 +256,26 @@ public class AudioPlayerController {
         }
     };
 
-    private ErrorHandler errorHandler = new ErrorHandler() {
+    private ErrorHandler mErrorHandler = new ErrorHandler() {
         @Override
         public boolean onErrorWithMediaPlayer(int what, int extra) {
             switch (what) {
-                // 文件不存在或错误，或网络不可访问错误
-                case MediaPlayer.MEDIA_ERROR_IO:
-                    break;
-                // 流不符合有关标准或文件的编码规范
-                case MediaPlayer.MEDIA_ERROR_MALFORMED:
-                    break;
-                // 视频流及其容器不适用于连续播放视频的指标（例如：MOOV原子）不在文件的开始
+                // 视频流式传输，其容器对于逐行播放无效，即视频的索引（例如moov atom）不在文件的开头。
                 case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
-                    break;
-                // 媒体服务器挂掉了
+                    // 媒体服务器已经死机。在这种情况下，应用程序必须释放MediaPlayer对象并实例化一个新对象
                 case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-                    break;
-                // 一些操作使用了过长的时间，也就是超时了，通常是超过了3-5秒
-                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-                    break;
-                // 未知错误
+                    // 未指定的媒体播放器错误
                 case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                default:
                     break;
-                // 比特流符合相关编码标准或文件的规格，但媒体框架不支持此功能
-                case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-                    break;
-                default:break;
             }
+            pausePlay();
             return false;
         }
 
         @Override
         public void onError(Exception e) {
-
+            pausePlay();
         }
     };
 

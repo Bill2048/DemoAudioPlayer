@@ -176,10 +176,8 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         }
     };
 
-    public void updateProgress(int progress, int length) {
-        if (mDraggingSeekBar) {
-            return;
-        }
+
+    private void updateProgress(int progress, int length) {
         if (length < 0) {
             length = 0;
         }
@@ -235,6 +233,13 @@ public class AudioPlayerFloatWindow extends FrameLayout {
 
     public void setTitle(String title) {
         mTvTitle.setText(title);
+    }
+
+    public void notifyProgressChanged(int progress, int length) {
+        if (mDraggingSeekBar) {
+            return;
+        }
+        updateProgress(progress, length);
     }
 
     public void release() {
