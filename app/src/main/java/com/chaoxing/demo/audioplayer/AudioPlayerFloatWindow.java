@@ -158,8 +158,8 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             if (fromUser) {
                 mDraggingSeekBar = true;
-                updateProgress(progress, mSbProgress.getMax());
             }
+            updateProgress(progress, mSbProgress.getMax());
         }
 
         @Override
@@ -176,6 +176,10 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         }
     };
 
+    private void updateBuffering(int percent, int length) {
+        double buffer = percent / 100 * length;
+        mSbProgress.setSecondaryProgress((int) Math.floor(buffer));
+    }
 
     private void updateProgress(int progress, int length) {
         if (length < 0) {
@@ -223,6 +227,13 @@ public class AudioPlayerFloatWindow extends FrameLayout {
         mLoading.setVisibility(View.GONE);
     }
 
+    public void reset() {
+        switchOnPause();
+        mSbProgress.setProgress(0);
+        mSbProgress.setSecondaryProgress(0);
+        mSbProgress.setMax(0);
+    }
+
     public void switchOnPlay() {
         mIbPlay.setImageResource(R.drawable.ic_pause_circle_outline_gray_13dp);
     }
@@ -233,6 +244,10 @@ public class AudioPlayerFloatWindow extends FrameLayout {
 
     public void setTitle(String title) {
         mTvTitle.setText(title);
+    }
+
+    public void notifyBufferingUpdate(int percent, int length) {
+        updateBuffering(percent, length);
     }
 
     public void notifyProgressChanged(int progress, int length) {

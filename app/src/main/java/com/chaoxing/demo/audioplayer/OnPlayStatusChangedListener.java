@@ -6,11 +6,15 @@ package com.chaoxing.demo.audioplayer;
 
 public interface OnPlayStatusChangedListener {
 
+    void onReset();
+
     void onStart();
 
     void onPause();
 
     void onStop();
+
+    void onBufferingUpdate(int percent, int length);
 
     void onPlayPositionChanged(int position, int length);
 

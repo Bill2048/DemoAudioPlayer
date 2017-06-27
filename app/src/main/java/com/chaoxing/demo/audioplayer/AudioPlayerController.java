@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.IBinder;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +51,10 @@ public class AudioPlayerController {
         return sInstance;
     }
 
+    public boolean isAudioServiceBound() {
+        return mAudioServiceBound;
+    }
+
     public void bindMediaService(Context context, AudioPlayerServiceBindCallbacks callbacks) {
         mAudioPlayerServiceBindCallbacks = callbacks;
         if (!mAudioServiceBound) {
@@ -90,7 +93,7 @@ public class AudioPlayerController {
             launchFloatWindow(mAudioPlayer.getApplicationContext());
             ((BaseApplication) mAudioPlayer.getApplication()).addAppForegroundBackgroundSwitchListener(mAppForegroundBackgroundSwitchListener);
             if (mAudioPlayerServiceBindCallbacks != null) {
-                mAudioPlayerServiceBindCallbacks.onBind();
+                mAudioPlayerServiceBindCallbacks.onBound();
             }
 //            loadLocalAudio();
         }
@@ -99,7 +102,7 @@ public class AudioPlayerController {
         public void onServiceDisconnected(ComponentName name) {
             mAudioServiceBound = false;
             if (mAudioPlayerServiceBindCallbacks != null) {
-                mAudioPlayerServiceBindCallbacks.onUnbind();
+                mAudioPlayerServiceBindCallbacks.onUnbound();
             }
         }
     };
@@ -244,6 +247,12 @@ public class AudioPlayerController {
 
     OnPlayStatusChangedListener mOnPlayStatusChangedListener = new OnPlayStatusChangedListener() {
         @Override
+        public void onReset() {
+            mPlayStatus = STATUS_STOP;
+            updatePlayerByStatus();
+        }
+
+        @Override
         public void onStart() {
             mPlayStatus = STATUS_PLAY;
             updatePlayerByStatus();
@@ -259,6 +268,11 @@ public class AudioPlayerController {
         public void onStop() {
             mPlayStatus = STATUS_STOP;
             updatePlayerByStatus();
+        }
+
+        @Override
+        public void onBufferingUpdate(int percent, int length) {
+            mPlayerWindow.notifyBufferingUpdate(percent, length);
         }
 
         @Override
@@ -296,10 +310,11 @@ public class AudioPlayerController {
     };
 
     private void play(int index) {
+        mAudioPlayer.reset();
+
         if (index < 0) {
             index = 0;
         }
-
         if (index >= mAudioList.size()) {
             index = -1;
         }
@@ -370,6 +385,8 @@ public class AudioPlayerController {
             mPlayerWindow.switchOnPause();
         } else if (mPlayStatus == STATUS_STOP) {
             mPlayerWindow.switchOnPause();
+            mPlayerWindow.setTitle("");
+            mPlaylistWindow.notifyActiveIndex(-1, null);
         }
     }
 
@@ -382,7 +399,6 @@ public class AudioPlayerController {
     }
 
     public void play(long playlistId, List<Audio> audioList, int index) {
-        Log.d("AP", "mAudioServiceBound : " + mAudioServiceBound + " playlist size : " + audioList.size());
         mPlaylistId = playlistId;
         if (!mAudioServiceBound) {
             return;

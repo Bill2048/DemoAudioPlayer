@@ -15,8 +15,6 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import java.io.IOException;
-
 /**
  * Created by huwei on 2017/6/11.
  */
@@ -153,13 +151,26 @@ public class AudioPlayerService extends Service {
         }
     }
 
-    private void stopMedia() {
+    private void resetMediaPlayer() {
         removePositionListener();
-        mActiveAudio = null;
-        mActivePosition = 0;
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
         }
+        mMediaPlayer.reset();
+        mActiveAudio = null;
+        mActivePosition = 0;
+        if (mOnPlayStatusChangedListener != null) {
+            mOnPlayStatusChangedListener.onReset();
+        }
+    }
+
+    private void stopMedia() {
+        removePositionListener();
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+        }
+        mActiveAudio = null;
+        mActivePosition = 0;
         if (mOnPlayStatusChangedListener != null) {
             mOnPlayStatusChangedListener.onStop();
         }
@@ -263,7 +274,9 @@ public class AudioPlayerService extends Service {
     private MediaPlayer.OnBufferingUpdateListener onBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
         @Override
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
-
+            if (mOnPlayStatusChangedListener != null) {
+                mOnPlayStatusChangedListener.onBufferingUpdate(percent, mp.getDuration());
+            }
         }
     };
 
@@ -402,6 +415,13 @@ public class AudioPlayerService extends Service {
 
     public void setErrorHandler(ErrorHandler errorHandler) {
         this.mErrorHandler = errorHandler;
+    }
+
+    public void reset() {
+        if (mMediaPlayer == null) {
+            return;
+        }
+        resetMediaPlayer();
     }
 
     public void pausePlay() {

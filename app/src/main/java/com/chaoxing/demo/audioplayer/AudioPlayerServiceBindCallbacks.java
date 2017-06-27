@@ -6,6 +6,8 @@ package com.chaoxing.demo.audioplayer;
 
 public interface AudioPlayerServiceBindCallbacks {
 
-    void onBind();
-    void onUnbind();
+    void onBound();
+
+    void onUnbound();
+
 }

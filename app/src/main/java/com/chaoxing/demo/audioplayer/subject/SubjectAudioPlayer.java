@@ -35,26 +35,34 @@ public class SubjectAudioPlayer {
 
     public void play(Context context, AudioList audioList) {
         mAudioList = audioList;
-        AudioPlayerController.getInstance().bindMediaService(context, mAudioPlayerServiceBindCallbacks);
+        if (!AudioPlayerController.getInstance().isAudioServiceBound()) {
+            AudioPlayerController.getInstance().bindMediaService(context, mAudioPlayerServiceBindCallbacks);
+        } else {
+            play();
+        }
+    }
+
+    private void play() {
+        AudioPlayerController.getInstance().setAudioContentRequester(mAudioContentRequester);
+        List<Audio> audioList = new ArrayList<>();
+        for (SubjectAudioProfile profile : mAudioList.getList()) {
+            Audio audio = new Audio();
+            audio.setTitle(profile.getMediaTitle());
+            audioList.add(audio);
+        }
+        profileList.clear();
+        profileList.addAll(mAudioList.getList());
+        AudioPlayerController.getInstance().play(System.currentTimeMillis(), audioList, mAudioList.getActiveIndex());
     }
 
     AudioPlayerServiceBindCallbacks mAudioPlayerServiceBindCallbacks = new AudioPlayerServiceBindCallbacks() {
         @Override
-        public void onBind() {
-            AudioPlayerController.getInstance().setAudioContentRequester(mAudioContentRequester);
-            List<Audio> audioList1 = new ArrayList<>();
-            for (SubjectAudioProfile profile : mAudioList.getList()) {
-                Audio audio = new Audio();
-                audio.setTitle(profile.getMediaTitle());
-                audioList1.add(audio);
-            }
-            profileList.clear();
-            profileList.addAll(mAudioList.getList());
-            AudioPlayerController.getInstance().play(System.currentTimeMillis(), audioList1, mAudioList.getActiveIndex());
+        public void onBound() {
+            play();
         }
 
         @Override
-        public void onUnbind() {
+        public void onUnbound() {
 
         }
     };
