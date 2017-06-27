@@ -138,13 +138,13 @@
             <SeekBar
                 android:id="@+id/sb_progress"
                 android:layout_width="0dp"
-                android:secondaryProgress="50"
-                android:thumb="@drawable/seekbar_thumb_gray"
-                android:progressDrawable="@drawable/seekbar_progress_gray"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
-                android:progress="50" />
+                android:progressBackgroundTint="#FFEEEEEE"
+                android:progressTint="#FF999999"
+                android:secondaryProgressTint="#FFCCCCCC"
+                android:thumb="@drawable/seekbar_thumb_gray" />
 
             <TextView
                 android:id="@+id/tv_length"

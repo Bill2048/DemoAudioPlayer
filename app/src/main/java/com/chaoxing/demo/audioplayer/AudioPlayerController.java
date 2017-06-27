@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ public class AudioPlayerController {
     private static AudioPlayerController sInstance;
 
     private boolean mAudioServiceBound;
+    private AudioPlayerServiceBindCallbacks mAudioPlayerServiceBindCallbacks;
     private AudioPlayerService mAudioPlayer;
     private AudioPlayerFloatWindow mPlayerWindow;
     private PlaylistFloatWindow mPlaylistWindow;
@@ -32,6 +34,9 @@ public class AudioPlayerController {
     public final static int STATUS_STOP = 0;
     public final static int STATUS_PLAY = 1;
     public final static int STATUS_PAUSE = 2;
+
+    private long mPlaylistId;
+    private AudioContentRequester mContentRequester;
 
     private AudioPlayerController() {
     }
@@ -47,7 +52,8 @@ public class AudioPlayerController {
         return sInstance;
     }
 
-    public void bindMediaService(Context context) {
+    public void bindMediaService(Context context, AudioPlayerServiceBindCallbacks callbacks) {
+        mAudioPlayerServiceBindCallbacks = callbacks;
         if (!mAudioServiceBound) {
             Intent playerIntent = new Intent(context.getApplicationContext(), AudioPlayerService.class);
 //        startService(playerIntent);
@@ -83,14 +89,24 @@ public class AudioPlayerController {
             mAudioServiceBound = true;
             launchFloatWindow(mAudioPlayer.getApplicationContext());
             ((BaseApplication) mAudioPlayer.getApplication()).addAppForegroundBackgroundSwitchListener(mAppForegroundBackgroundSwitchListener);
-            loadLocalAudio();
+            if (mAudioPlayerServiceBindCallbacks != null) {
+                mAudioPlayerServiceBindCallbacks.onBind();
+            }
+//            loadLocalAudio();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mAudioServiceBound = false;
+            if (mAudioPlayerServiceBindCallbacks != null) {
+                mAudioPlayerServiceBindCallbacks.onUnbind();
+            }
         }
     };
+
+    public void setAudioPlayerServiceBindCallbacks(AudioPlayerServiceBindCallbacks audioPlayerServiceBindCallbacks) {
+        this.mAudioPlayerServiceBindCallbacks = audioPlayerServiceBindCallbacks;
+    }
 
     private void launchFloatWindow(Context context) {
         mPlayerWindow = new AudioPlayerFloatWindow(context.getApplicationContext());
@@ -145,7 +161,7 @@ public class AudioPlayerController {
                             audio.setData("http://s1.ananas.chaoxing.com/audio/a9/7ca3f4cb058055ccf5e4933d8c30766e/audio.mp3");
                             audio.setTitle("单田芳 - 水浒外传 - 第022回.MP3");
                             audioList.add(0, audio);
-                            play(audioList, 0);
+                            play(System.currentTimeMillis(), audioList, 0);
                         }
                     });
                 }
@@ -292,7 +308,55 @@ public class AudioPlayerController {
             mPlayStatus = STATUS_PLAY;
             updatePlayerByStatus();
             Audio audio = mAudioList.get(mActiveIndex);
-            AudioPlayerService.play(mAudioPlayer.getApplicationContext(), audio, 0);
+            if (audio.getData() == null) {
+                if (mContentRequester != null) {
+                    mContentRequester.request(mPlaylistId, mActiveIndex, new AudioContentRequestCallbacks() {
+                        @Override
+                        public void onStart(long playlistId, int index) {
+                            if (!mAudioServiceBound) {
+                                return;
+                            }
+                            if (playlistId != mPlaylistId) {
+                                return;
+                            }
+                        }
+
+                        @Override
+                        public void onCompleted(long playlistId, int index, String uri) {
+                            if (!mAudioServiceBound) {
+                                return;
+                            }
+                            if (playlistId != mPlaylistId) {
+                                return;
+                            }
+                            Audio requestAudio = mAudioList.get(index);
+                            requestAudio.setData(uri);
+                            if (mActiveIndex == index) {
+                                if (mPlayStatus == STATUS_PLAY) {
+                                    AudioPlayerService.play(mAudioPlayer.getApplicationContext(), requestAudio, 0);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onError(long playlistId, int index, Exception e, String message) {
+                            if (!mAudioServiceBound) {
+                                return;
+                            }
+                            if (playlistId != mPlaylistId) {
+                                return;
+                            }
+                            if (mActiveIndex == index) {
+                                if (mPlayStatus == STATUS_PLAY) {
+                                    pausePlay();
+                                }
+                            }
+                        }
+                    });
+                }
+            } else {
+                AudioPlayerService.play(mAudioPlayer.getApplicationContext(), audio, 0);
+            }
         }
     }
 
@@ -309,7 +373,17 @@ public class AudioPlayerController {
         }
     }
 
-    public void play(List<Audio> audioList, int index) {
+    private void setPlayProgress(int progress) {
+        mAudioPlayer.updatePlayPosition(progress);
+    }
+
+    public void setAudioContentRequester(AudioContentRequester contentRequester) {
+        this.mContentRequester = contentRequester;
+    }
+
+    public void play(long playlistId, List<Audio> audioList, int index) {
+        Log.d("AP", "mAudioServiceBound : " + mAudioServiceBound + " playlist size : " + audioList.size());
+        mPlaylistId = playlistId;
         if (!mAudioServiceBound) {
             return;
         }
@@ -345,10 +419,6 @@ public class AudioPlayerController {
         mActiveIndex++;
         play(mActiveIndex);
 
-    }
-
-    public void setPlayProgress(int progress) {
-        mAudioPlayer.updatePlayPosition(progress);
     }
 
 }
