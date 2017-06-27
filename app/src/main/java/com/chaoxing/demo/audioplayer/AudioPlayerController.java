@@ -348,7 +348,11 @@ public class AudioPlayerController {
                             requestAudio.setData(uri);
                             if (mActiveIndex == index) {
                                 if (mPlayStatus == STATUS_PLAY) {
-                                    AudioPlayerService.play(mAudioPlayer.getApplicationContext(), requestAudio, 0);
+                                    if (requestAudio.getData() == null || requestAudio.getData().trim().length() == 0) {
+                                        pausePlay();
+                                    } else {
+                                        AudioPlayerService.play(mAudioPlayer.getApplicationContext(), requestAudio, 0);
+                                    }
                                 }
                             }
                         }

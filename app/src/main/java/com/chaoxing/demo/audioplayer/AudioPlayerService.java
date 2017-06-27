@@ -47,7 +47,7 @@ public class AudioPlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        initMediaPlayer();
         callStateListener();
 //        requestAudioFocus();
         registerPlayReceiver();
