@@ -11,4 +11,16 @@
         android:layout_centerInParent="true"
         android:text="PLAY" />
 
+    <com.chaoxing.demo.audioplayer.widget.BufferedSeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:max="100"
+        android:progress="50"
+        android:progressBackgroundTint="#FFEEEEEE"
+        android:progressTint="#FF999999"
+        android:secondaryProgress="70"
+        android:secondaryProgressTint="#FFCCCCCC"
+        android:thumb="@drawable/seekbar_thumb_gray"
+        android:thumbOffset="5dp" />
 </RelativeLayout>
