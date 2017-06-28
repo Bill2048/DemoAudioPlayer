@@ -4,12 +4,14 @@
     android:layout_height="match_parent"
     android:background="#33000000"
     android:gravity="bottom"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:weightSum="5">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_height="0dp"
         android:layout_gravity="center_vertical"
+        android:layout_weight="3"
         android:background="#FFFAFAFA"
         android:clickable="true"
         android:orientation="vertical">
@@ -26,8 +28,8 @@
             android:gravity="center"
             android:padding="16dp"
             android:text="播放列表"
-            android:textColor="#FF666666"
-            android:textSize="15sp" />
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
 
         <View
             android:layout_width="match_parent"
@@ -44,13 +46,19 @@
             android:footerDividersEnabled="false"
             android:headerDividersEnabled="true" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="#33000000" />
+
         <Button
             android:id="@+id/btn_close"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#FFCCCCCC"
+            android:background="@android:color/transparent"
             android:padding="8dp"
             android:text="关闭"
-            android:textColor="#FF333333" />
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
     </LinearLayout>
 </LinearLayout>

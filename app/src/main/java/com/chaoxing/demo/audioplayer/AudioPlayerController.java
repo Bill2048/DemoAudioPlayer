@@ -35,6 +35,7 @@ public class AudioPlayerController {
     public final static int STATUS_PAUSE = 2;
 
     private long mPlaylistId;
+    private String mPlaylistTitle;
     private AudioContentRequester mContentRequester;
 
     private AudioPlayerController() {
@@ -164,7 +165,7 @@ public class AudioPlayerController {
                             audio.setData("http://s1.ananas.chaoxing.com/audio/a9/7ca3f4cb058055ccf5e4933d8c30766e/audio.mp3");
                             audio.setTitle("单田芳 - 水浒外传 - 第022回.MP3");
                             audioList.add(0, audio);
-                            play(System.currentTimeMillis(), audioList, 0);
+                            play(System.currentTimeMillis(), "播放列表", audioList, 0);
                         }
                     });
                 }
@@ -402,8 +403,9 @@ public class AudioPlayerController {
         this.mContentRequester = contentRequester;
     }
 
-    public void play(long playlistId, List<Audio> audioList, int index) {
+    public void play(long playlistId, String playlistTitle, List<Audio> audioList, int index) {
         mPlaylistId = playlistId;
+        mPlaylistTitle = playlistTitle;
         if (!mAudioServiceBound) {
             return;
         }
@@ -411,7 +413,7 @@ public class AudioPlayerController {
         mAudioList.clear();
         mAudioList.addAll(audioList);
 
-        mPlaylistWindow.notifyPlaylist(index, audioList);
+        mPlaylistWindow.notifyPlaylist(mPlaylistTitle, index, audioList);
 
         play(index);
     }

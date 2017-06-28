@@ -52,7 +52,7 @@ public class SubjectAudioPlayer {
         }
         profileList.clear();
         profileList.addAll(mAudioList.getList());
-        AudioPlayerController.getInstance().play(System.currentTimeMillis(), audioList, mAudioList.getActiveIndex());
+        AudioPlayerController.getInstance().play(System.currentTimeMillis(), mAudioList.getTitle(), audioList, mAudioList.getActiveIndex());
     }
 
     AudioPlayerServiceBindCallbacks mAudioPlayerServiceBindCallbacks = new AudioPlayerServiceBindCallbacks() {

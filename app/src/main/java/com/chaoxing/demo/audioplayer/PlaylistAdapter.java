@@ -35,32 +35,22 @@ public class PlaylistAdapter extends ArrayAdapter<Audio> {
             holder = (ViewHolder) convertView.getTag();
         }
         Audio audio = getItem(position);
-        holder.tvNumber.setText((position + 1) + "");
         holder.tvTitle.setText(audio.getTitle());
-        holder.tvArtist.setText(audio.getArtist());
         if (mPlaylistCallbacks != null && mPlaylistCallbacks.getActiveIndex() == position) {
-            holder.tvNumber.setTextColor(0xFFFF0000);
-            holder.tvTitle.setTextColor(0xFFFF0000);
-            holder.tvArtist.setTextColor(0xFFFF0000);
+            holder.tvTitle.setTextColor(0xFF0099FF);
         } else {
-            holder.tvNumber.setTextColor(getContext().getResources().getColor(android.R.color.black));
             holder.tvTitle.setTextColor(getContext().getResources().getColor(android.R.color.black));
-            holder.tvArtist.setTextColor(getContext().getResources().getColor(android.R.color.darker_gray));
         }
         return convertView;
     }
 
     static class ViewHolder {
         View itemView;
-        TextView tvNumber;
         TextView tvTitle;
-        TextView tvArtist;
 
         ViewHolder(View itemView) {
             this.itemView = itemView;
-            tvNumber = (TextView) itemView.findViewById(R.id.tv_number);
             tvTitle = (TextView) itemView.findViewById(R.id.tv_title);
-            tvArtist = (TextView) itemView.findViewById(R.id.tv_artist);
         }
     }
 

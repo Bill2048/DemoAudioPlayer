@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity {
         mBtnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                AudioPlayerController.getInstance().bindMediaService(MainActivity.this);
                 SubjectAudioPlayer.getInstance().play(MainActivity.this, audioList);
             }
         });
