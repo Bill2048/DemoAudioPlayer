@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.chaoxing.demo.audioplayer.subject.AudioList;
-import com.chaoxing.demo.audioplayer.subject.SubjectAudioPlayer;
+import com.chaoxing.demo.audioplayer.subject.SubjectAudioHelper;
 import com.google.gson.Gson;
 
 public class MainActivity extends AppCompatActivity {
@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         mBtnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SubjectAudioPlayer.getInstance().play(MainActivity.this, audioList);
+                SubjectAudioHelper.getInstance().play(MainActivity.this, audioList);
             }
         });
     }
